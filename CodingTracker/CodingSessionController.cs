@@ -1,12 +1,20 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿
 
-namespace CodingTracker
+namespace TSCA.CodingTracker;
+internal class CodingSessionController
 {
-    internal class CodingSessionController
+    List<CodingSession> sessions = new();
+    internal CodingSessionController()
     {
+
     }
+
+    internal void CreateSession() { }
+
+    internal void ReadSession() { } // also include a view that 
+
+    internal void UpdateSession() { }
+
+    internal void DeleteSession() { }
 }
+

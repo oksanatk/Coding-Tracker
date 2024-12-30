@@ -1,0 +1,9 @@
+{
+  "profiles": {
+    "CodingTracker": {
+      "commandName": "Project",
+      "workingDirectory": "C:\\Users\\O\\source\\repos\\Learning Projects\\CodingTracker",
+      "sqlDebugging": true
+    }
+  }
+}

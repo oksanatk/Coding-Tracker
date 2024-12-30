@@ -1,20 +1,25 @@
-﻿using Spectre.Console;
-
-namespace TSCA.CodingTracker
+﻿using System.Configuration;
+namespace TSCA.CodingTracker;
+class CodingTracker
 {
-    class CodingTracker
+    internal readonly UserInterface _userInterface = new UserInterface();
+
+    public static void Main(string[] args)
     {
-        public static void Main(string[] args)
+        if (!File.Exists("CodingHours.db"))
         {
-            if (!File.Exists("CodingHours.db"))
-            {
-                File.Create("CodingHours.db").Close();
-            }
-
-
-
-
+            File.Create("CodingHours.db").Close();
         }
+        string? sAttr = ConfigurationManager.AppSettings.Get("Key0");
+
+        Console.WriteLine($"the value of key0 is: {sAttr}");
+
+        DatabaseManager databaseManager = new();
+
+        databaseManager.CreateTable();
+
+
+
     }
 }
 
@@ -38,6 +43,6 @@ namespace TSCA.CodingTracker
  *      (starts a stopwatch, and pops up option to end the coding session, too
  * 2. View report for 
  * 
- * 
+ * */
 
 
