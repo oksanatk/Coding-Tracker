@@ -1,48 +1,33 @@
 ﻿using System.Configuration;
 namespace TSCA.CodingTracker;
-class CodingTracker
+class Program
 {
-    internal readonly UserInterface _userInterface = new UserInterface();
 
     public static void Main(string[] args)
     {
+        bool speechRecognitionMode = false;
+
         if (!File.Exists("CodingHours.db"))
         {
             File.Create("CodingHours.db").Close();
         }
+
+        if (args.Contains("--voice-input"))
+        {
+            speechRecognitionMode = true;
+        }
+
+        UserInterface userInterface = new UserInterface(speechRecognitionMode);
+
+
+
+
+
+
         string? sAttr = ConfigurationManager.AppSettings.Get("Key0");
-
         Console.WriteLine($"the value of key0 is: {sAttr}");
-
-        DatabaseManager databaseManager = new();
-
-        databaseManager.CreateTable();
-
-
 
     }
 }
-
-
-
-
-
-// what's the layout, what's the layout???
-
-
-/* hmmmm....
- * 
- * so I'd need an enum? on the options???
- * 
- * 
- * hang on... please hold.... 
- * 
- * so the user interface and options to work around.....
- * 
- * 1. Begin coding session
- *      (starts a stopwatch, and pops up option to end the coding session, too
- * 2. View report for 
- * 
- * */
 
 

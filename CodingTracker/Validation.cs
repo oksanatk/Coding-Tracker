@@ -6,11 +6,14 @@ using System.Threading.Tasks;
 
 namespace TSCA.CodingTracker
 {
-    internal class Validation
+    internal static class Validation
     {
-        internal int GetUserIntInput() {  return 0; }
+        internal static int GetUserIntInput() {  return 0; }
 
-        internal string GetVoiceInput() { return ""; }
+        internal static string ParseDate(DateTime date)
+        {
+            return "";
+        }
 
 
     }
