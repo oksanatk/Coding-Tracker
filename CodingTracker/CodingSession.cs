@@ -10,9 +10,9 @@ internal class CodingSession
     internal int id { get; set; }
     internal DateTime startTime { get; set; }
     internal DateTime endTime { get; set; }  
-    internal int duration { get; set; }
+    internal TimeSpan duration { get; set; }
 
-    internal CodingSession(int id,  DateTime startTime, DateTime endTime, int duration)
+    internal CodingSession(int id,  DateTime startTime, DateTime endTime, TimeSpan duration)
     {
         this.id = id;
         this.startTime = startTime;
@@ -20,7 +20,7 @@ internal class CodingSession
         this.duration = duration;
     }
 
-    internal CodingSession(DateTime startTime, DateTime endTime, int duration)
+    internal CodingSession(DateTime startTime, DateTime endTime, TimeSpan duration)
     {
         this.startTime = startTime;
         this.endTime = endTime;

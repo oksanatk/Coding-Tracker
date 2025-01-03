@@ -41,7 +41,7 @@ internal class DatabaseManager
                 var sessionId = reader.GetInt32(reader.GetOrdinal("id"));
                 var startTime = DateTime.Parse(reader.GetString(reader.GetOrdinal("start_datetime")));
                 var endTime = DateTime.Parse(reader.GetString(reader.GetOrdinal("end_datetime")));
-                var duration = DateTime.Parse(reader.GetString(reader.GetOrdinal("duration")));
+                var duration = TimeSpan.Parse(reader.GetString(reader.GetOrdinal("duration")));
 
                 pastSessions.Add(new CodingSession(sessionId,startTime, endTime, duration));
             }

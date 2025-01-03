@@ -5,13 +5,13 @@ using System.Text.RegularExpressions;
 namespace TSCA.CodingTracker;
 internal class UserInterface
 {
-    private readonly CodingSessionController _codingSessionController = new();
-    private readonly DatabaseManager _databaseManager = new();
+    private readonly CodingSessionController _codingSessionController;
     private static string? speechKey = Environment.GetEnvironmentVariable("Azure_SpeechSDK_Key");
     private static string? speechRegion = Environment.GetEnvironmentVariable("Azure_SpeechRegion_Key");
 
     internal UserInterface(bool voiceMode)
     {
+        _codingSessionController = new CodingSessionController();
         ShowMainMenu(voiceMode);
     }
 
@@ -46,7 +46,7 @@ internal class UserInterface
         }
     }
 
-    internal static void CreateNewSessionMenu(bool voiceMode)
+    internal void CreateNewSessionMenu(bool voiceMode)
     {
         string userMenuChoice = "";
         bool exitToMainMenu = false;
@@ -62,17 +62,16 @@ internal class UserInterface
                 case "one":
                     // multiple methods here: new coding session now in controller lauchnes new stopwatch on screen
                     break;
+
                 case "2":
                 case "two":
-                    // CreateNewManualCodingSession: get user input here,
-                    // send to be validated in validation.cs,
-                    // then send validated data to controller to create new object,
-                    // add it to the current list of sessions,
-                    // and then send formatted and parsed DateTime string to the DatabaseManager to actually write to the sqlite database
+                    ManuallyInputNewSessionDetails(voiceMode);
                     break;
+
                 case "exit":
                     exitToMainMenu = true;
                     break;
+
                 default:
                     AnsiConsole.MarkupLine("I'm sorry, but I didn't understand that input.");
                     break;
@@ -80,7 +79,7 @@ internal class UserInterface
         }
     }
 
-    internal static void ViewEditPastSessions(bool voiceMode)
+    internal void ViewEditPastSessions(bool voiceMode)
     {
         string userMenuChoice = "";
         bool exitToMainMenu = false;
@@ -118,7 +117,7 @@ internal class UserInterface
         }
     }
 
-    internal static Panel MainMenuPanel()
+    internal Panel MainMenuPanel()
     {
         Grid grid = new();
         grid.AddColumn();
@@ -135,22 +134,23 @@ internal class UserInterface
         };
     }
 
-    internal static void CreateNewSessionManually(bool voiceMode)
+    internal void ManuallyInputNewSessionDetails(bool voiceMode)
     {
         string errorMessage = "";
         int userInputtedDateOrTime = -1;
         List<String> dateTimePieces = new();
+
         string dateTimeFormat = "yyyy-MM-dd-HH-mm";
         DateTime startTime = new();
-        DateTime endTime;
+        DateTime endTime = new();
 
         string[] sessionInputPrompts = new string[]
         {
             "\nPlease enter the [bold yellow]year[/] (yyyy) of the {0} time.",
             "\nPlease enter the [bold yellow]month[/] (MM) of the {0} time.",
             "\nPlease enter the [bold yellow]day[/] (dd) of the {0} time.",
-            "\nPlease enter the [bold yellow]hour[/] (hh) of the {0} time.",
-            "\nPlease enter the [bold yellow]minute[/] (MM) of the {0} time.",
+            "\nPlease enter the [bold yellow]hour[/] (HH) of the {0} time.",
+            "\nPlease enter the [bold yellow]minute[/] (mm) of the {0} time.",
         };
 
         string[] dateTimeUnits = new string[] { "year", "month", "day", "hour", "minute" };
@@ -162,10 +162,10 @@ internal class UserInterface
         {
             do
             {
-                AnsiConsole.MarkupLine(sessionInputPrompts[i], i < sessionInputPrompts.Length ? "start" : "end");
+                AnsiConsole.MarkupLine(sessionInputPrompts[i % sessionInputPrompts.Length], i < sessionInputPrompts.Length ? "start" : "end");
 
                 string currentDateTimeUnit = dateTimeUnits[i % 5];
-                userInputtedDateOrTime = Validation.ValidateUserIntInput(GetUserInput(voiceMode), out errorMessage);
+                userInputtedDateOrTime = Validation.ValidateUserIntInput(GetUserInput(voiceMode), out errorMessage, typeOfDateUnit:currentDateTimeUnit);
 
                 if (!String.IsNullOrEmpty(errorMessage))
                 {
@@ -179,48 +179,43 @@ internal class UserInterface
             if (i == sessionInputPrompts.Length-1) 
             {
                 string maybeDate = String.Join('-',dateTimePieces);
-                if (DateTime.TryParse(maybeDate, out startTime))
+                if (DateTime.TryParseExact(maybeDate, dateTimeFormat, null, System.Globalization.DateTimeStyles.None, out startTime))
                 {
                     dateTimePieces.Clear();
                 } else
                 {
                     AnsiConsole.MarkupLine("That date was invalid for some reason. Please try again.");
                     dateTimePieces.Clear();
-                    i = 0;
+                    i = -1;
                 }
             } else if (i == sessionInputPrompts.Length * 2 - 1)
             {
                 string maybeDate = String.Join('-', dateTimePieces);
-                if (DateTime.TryParse(maybeDate, out endTime))
+                if (DateTime.TryParseExact(maybeDate, dateTimeFormat, null, System.Globalization.DateTimeStyles.None, out endTime))
                 {
                     dateTimePieces.Clear();
                 }
                 else
                 {
                     AnsiConsole.MarkupLine("That date was invalid for some reason. Please try again.");
+                    // TODO - possible infinitely stuck loop here. Create escape back to main menu if needed
                     dateTimePieces.Clear();
-                    i = sessionInputPrompts.Length;
+                    i = sessionInputPrompts.Length-1;
                 }
 
-                if (DateTime.Compare(startTime,endTime) > 0)
+                if (DateTime.Compare(startTime,endTime) >= 0)
                 {
-                    AnsiConsole.MarkupLine("For some reason, your start time was AFTER your end time. Please input the end time again.");
-                    i = sessionInputPrompts.Length;
+                    AnsiConsole.MarkupLine("For some reason, [yellow]start time was the same as or [bold yellow]after[/] your end time[/]. Please input the end time again.");
+                    i = sessionInputPrompts.Length-1;
                 }
             }
             // TODO -- maybe confirm the start / end before writing to the database?
         }
-        // fully ran the for loop. both start and end times are valid.
-        // still need to check if end time is greater than start time
-        // then, below: 
-        // send to controller
-        // controller calculates duration, and sends to 
 
-
-
+        _codingSessionController.CreateSession(startTime, endTime);
     }
 
-    internal static Panel CreateNewSessionPanel()
+    internal Panel CreateNewSessionPanel()
     {
         Grid grid = new();
         grid.AddColumn();
@@ -237,7 +232,7 @@ internal class UserInterface
         };
     }
 
-    internal static Panel ShowPastSessionsPanel()
+    internal Panel ShowPastSessionsPanel()
     {
         Grid grid = new();
         grid.AddColumn();
@@ -256,7 +251,7 @@ internal class UserInterface
         };
     }
 
-    internal static string GetUserInput(bool voiceMode)
+    internal string GetUserInput(bool voiceMode)
     {
         string? readResult;
         string userInput = "";
@@ -276,7 +271,7 @@ internal class UserInterface
         return userInput;
     }
 
-    internal static async Task<String> GetVoiceInput()
+    internal async Task<String> GetVoiceInput()
     {
         int repeatCounter = 0;
         RecognitionResult result;
