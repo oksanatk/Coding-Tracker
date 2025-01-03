@@ -58,7 +58,7 @@ internal class DatabaseManager
             string sqliteCommand =
                 @"
                     INSERT INTO coding_tracker 
-                    (id, start_datetime, end_datetime, duration)
+                    (start_datetime, end_datetime, duration)
                     VALUES 
                     (@start_datetime, @end_datetime, @duration);
                 ";

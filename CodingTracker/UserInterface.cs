@@ -120,31 +120,117 @@ internal class UserInterface
 
     internal static Panel MainMenuPanel()
     {
-        Table table = new Table();
-        table.AddColumn("Your Options:");
-        table.AddRow("[aqua]1[/] - Create new coding session");
-        table.AddRow("[aqua]2[/] - View past coding sessions");
-        table.AddEmptyRow();
-        table.AddRow("OR enter [aqua]exit[/] to exit the app");
+        Grid grid = new();
+        grid.AddColumn();
+        grid.AddEmptyRow();
+        grid.AddRow("[aqua]1[/] - Create new coding session");
+        grid.AddRow("[aqua]2[/] - View past coding sessions");
+        grid.AddEmptyRow();
+        grid.AddRow("OR enter [aqua]exit[/] to exit the app");
 
-
-        return new Panel(table)
+        return new Panel(grid)
         {
             Border = BoxBorder.Square,
-            Header = new PanelHeader("Welcome to the Coding Tracker!")
+            Header = new PanelHeader("[bold yellow]Welcome![/] Main Menu")
         };
+    }
+
+    internal static void CreateNewSessionManually(bool voiceMode)
+    {
+        string errorMessage = "";
+        int userInputtedDateOrTime = -1;
+        List<String> dateTimePieces = new();
+        string dateTimeFormat = "yyyy-MM-dd-HH-mm";
+        DateTime startTime = new();
+        DateTime endTime;
+
+        string[] sessionInputPrompts = new string[]
+        {
+            "\nPlease enter the [bold yellow]year[/] (yyyy) of the {0} time.",
+            "\nPlease enter the [bold yellow]month[/] (MM) of the {0} time.",
+            "\nPlease enter the [bold yellow]day[/] (dd) of the {0} time.",
+            "\nPlease enter the [bold yellow]hour[/] (hh) of the {0} time.",
+            "\nPlease enter the [bold yellow]minute[/] (MM) of the {0} time.",
+        };
+
+        string[] dateTimeUnits = new string[] { "year", "month", "day", "hour", "minute" };
+
+        AnsiConsole.Clear();
+        AnsiConsole.MarkupLine("You are choosing to manually input the start and end times of the coding session.\n");
+
+        for(int i=0; i<(sessionInputPrompts.Length * 2); i++)
+        {
+            do
+            {
+                AnsiConsole.MarkupLine(sessionInputPrompts[i], i < sessionInputPrompts.Length ? "start" : "end");
+
+                string currentDateTimeUnit = dateTimeUnits[i % 5];
+                userInputtedDateOrTime = Validation.ValidateUserIntInput(GetUserInput(voiceMode), out errorMessage);
+
+                if (!String.IsNullOrEmpty(errorMessage))
+                {
+                    AnsiConsole.MarkupLine(errorMessage);
+                } else
+                {
+                    dateTimePieces.Add(userInputtedDateOrTime.ToString());
+                }
+            } while (!String.IsNullOrEmpty(errorMessage));
+
+            if (i == sessionInputPrompts.Length-1) 
+            {
+                string maybeDate = String.Join('-',dateTimePieces);
+                if (DateTime.TryParse(maybeDate, out startTime))
+                {
+                    dateTimePieces.Clear();
+                } else
+                {
+                    AnsiConsole.MarkupLine("That date was invalid for some reason. Please try again.");
+                    dateTimePieces.Clear();
+                    i = 0;
+                }
+            } else if (i == sessionInputPrompts.Length * 2 - 1)
+            {
+                string maybeDate = String.Join('-', dateTimePieces);
+                if (DateTime.TryParse(maybeDate, out endTime))
+                {
+                    dateTimePieces.Clear();
+                }
+                else
+                {
+                    AnsiConsole.MarkupLine("That date was invalid for some reason. Please try again.");
+                    dateTimePieces.Clear();
+                    i = sessionInputPrompts.Length;
+                }
+
+                if (DateTime.Compare(startTime,endTime) > 0)
+                {
+                    AnsiConsole.MarkupLine("For some reason, your start time was AFTER your end time. Please input the end time again.");
+                    i = sessionInputPrompts.Length;
+                }
+            }
+            // TODO -- maybe confirm the start / end before writing to the database?
+        }
+        // fully ran the for loop. both start and end times are valid.
+        // still need to check if end time is greater than start time
+        // then, below: 
+        // send to controller
+        // controller calculates duration, and sends to 
+
+
+
     }
 
     internal static Panel CreateNewSessionPanel()
     {
-        Table table = new();
-        table.AddColumn("Your Options:");
-        table.AddRow("[aqua]1[/] - Start a new session [yellow]now[/].");
-        table.AddRow("[aqua]2[/] - Manually input the start and end times of a new record.");
-        table.AddEmptyRow();
-        table.AddRow("OR enter [aqua]exit[/] to exit back to the main menu.");
+        Grid grid = new();
+        grid.AddColumn();
+        grid.AddEmptyRow();
+        grid.AddRow("[aqua]1[/] - Start a new session [yellow]now[/].");
+        grid.AddRow("[aqua]2[/] - Manually input the start and end times of a new record.");
+        grid.AddEmptyRow();
+        grid.AddRow("OR enter [aqua]exit[/] to exit back to the main menu.");
 
-        return new Panel(table)
+        return new Panel(grid)
         {
             Border = BoxBorder.Square,
             Header = new PanelHeader("Create a New Coding Session")
@@ -153,16 +239,17 @@ internal class UserInterface
 
     internal static Panel ShowPastSessionsPanel()
     {
-        Table table = new Table();
-        table.AddColumn("Your Options:");
-        table.AddRow("[aqua]1[/] - View all past coding sessions and associated stats");
-        table.AddRow("[aqua]2[/] - Update a past coding session");
-        table.AddRow("[aqua]3[/] - Delete a past coding session");
-        table.AddRow("[aqua]4[/] - Calculate hours needed to meet your coding goal"); // result ouputted in hours of coding per day, per week, per month, per year 
-        table.AddEmptyRow();
-        table.AddRow("OR enter [aqua]exit[/] to exit back to the main menu.");
+        Grid grid = new();
+        grid.AddColumn();
+        grid.AddEmptyRow();
+        grid.AddRow("[aqua]1[/] - View all past coding sessions and associated stats");
+        grid.AddRow("[aqua]2[/] - Update a past coding session");
+        grid.AddRow("[aqua]3[/] - Delete a past coding session");
+        grid.AddRow("[aqua]4[/] - Calculate hours needed to meet your coding goal"); // result ouputted in hours of coding per day, per week, per month, per year 
+        grid.AddEmptyRow();
+        grid.AddRow("OR enter [aqua]exit[/] to exit back to the main menu.");
 
-        return new Panel(table)
+        return new Panel(grid)
         {
             Border = BoxBorder.Square,
             Header = new PanelHeader("Past Coding Sessions")
