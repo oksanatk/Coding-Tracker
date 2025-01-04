@@ -1,5 +1,6 @@
 ﻿using Microsoft.CognitiveServices.Speech;
 using Spectre.Console;
+using System.Diagnostics;
 using System.Text.RegularExpressions;
 
 namespace TSCA.CodingTracker;
@@ -15,7 +16,7 @@ internal class UserInterface
         ShowMainMenu(voiceMode);
     }
 
-    internal void ShowMainMenu(bool voiceMode) //if not gui mode, then spectre.console. if gui mode, then maui
+    internal void ShowMainMenu(bool voiceMode) // TODO if not gui mode, then spectre.console. if gui mode, then maui
     {
         bool endApp = false;
         string userMainMenuOption = "";
@@ -23,10 +24,11 @@ internal class UserInterface
         while (!endApp)
         {
             Panel mainMenuPanel = MainMenuPanel();
+
+            AnsiConsole.Clear();
             AnsiConsole.Write(mainMenuPanel);
 
             userMainMenuOption = GetUserInput(voiceMode);
-
             switch (userMainMenuOption)
             {
                 case "1":
@@ -51,6 +53,7 @@ internal class UserInterface
         string userMenuChoice = "";
         bool exitToMainMenu = false;
 
+        AnsiConsole.Clear();
         while (!exitToMainMenu)
         {
             AnsiConsole.Write(CreateNewSessionPanel());
@@ -60,7 +63,12 @@ internal class UserInterface
             {
                 case "1":
                 case "one":
+
                     // multiple methods here: new coding session now in controller lauchnes new stopwatch on screen
+                        // 1. accept input: press any key to start, then any key again to stop. After stopping, coding session will finalize for that length of time.
+                        // 2. while session, keep printing, deleting, and re-printing the current session time.
+
+                        // System.Diagnositics.Stopwatch stopwatch = new Stopwatch.StartNew()
                     break;
 
                 case "2":
@@ -77,6 +85,20 @@ internal class UserInterface
                     break;
             } 
         }
+    }
+
+    internal void StartSessionNow(bool voiceMode)
+    {
+        DateTime startTime = DateTime.Now;
+        Stopwatch stopwatch = Stopwatch.StartNew();
+
+        // some logic to continuously display the stopwatch here
+        do
+        {
+            AnsiConsole.MarkupLine(stopwatch.Elapsed.ToString());
+        } while (GetUserInput(voiceMode) != null);
+
+        DateTime endTime = DateTime.Now;
     }
 
     internal void ViewEditPastSessions(bool voiceMode)
@@ -172,7 +194,13 @@ internal class UserInterface
                     AnsiConsole.MarkupLine(errorMessage);
                 } else
                 {
-                    dateTimePieces.Add(userInputtedDateOrTime.ToString());
+                    if (currentDateTimeUnit != "year" && userInputtedDateOrTime < 10)
+                    {
+                        dateTimePieces.Add("0" + userInputtedDateOrTime.ToString());
+                    } else
+                    {
+                        dateTimePieces.Add(userInputtedDateOrTime.ToString());
+                    }
                 }
             } while (!String.IsNullOrEmpty(errorMessage));
 
