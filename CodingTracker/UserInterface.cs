@@ -87,7 +87,7 @@ internal class UserInterface
         }
     }
 
-    internal void StartSessionNow(bool voiceMode)
+    internal void StartNewSessionNow(bool voiceMode)
     {
         DateTime startTime = DateTime.Now;
         Stopwatch stopwatch = Stopwatch.StartNew();
