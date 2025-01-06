@@ -2,6 +2,7 @@
 using Spectre.Console;
 using System.Diagnostics;
 using System.Text.RegularExpressions;
+using System.Timers;
 
 namespace TSCA.CodingTracker;
 internal class UserInterface
@@ -28,7 +29,7 @@ internal class UserInterface
             AnsiConsole.Clear();
             AnsiConsole.Write(mainMenuPanel);
 
-            userMainMenuOption = GetUserInput(voiceMode);
+            userMainMenuOption = GetUserInput(voiceMode).Result;
             switch (userMainMenuOption)
             {
                 case "1":
@@ -57,13 +58,13 @@ internal class UserInterface
         while (!exitToMainMenu)
         {
             AnsiConsole.Write(CreateNewSessionPanel());
-            userMenuChoice = GetUserInput(voiceMode);
+            userMenuChoice = GetUserInput(voiceMode).Result;
 
             switch (userMenuChoice)
             {
                 case "1":
                 case "one":
-
+                    StartNewSessionNow(voiceMode);
                     // multiple methods here: new coding session now in controller lauchnes new stopwatch on screen
                         // 1. accept input: press any key to start, then any key again to stop. After stopping, coding session will finalize for that length of time.
                         // 2. while session, keep printing, deleting, and re-printing the current session time.
@@ -87,18 +88,34 @@ internal class UserInterface
         }
     }
 
-    internal void StartNewSessionNow(bool voiceMode)
+    internal async void StartNewSessionNow(bool voiceMode)
     {
         DateTime startTime = DateTime.Now;
+        DateTime endTime = new();
+        bool timerIsRunning = true;
         Stopwatch stopwatch = Stopwatch.StartNew();
+        System.Timers.Timer timer = new System.Timers.Timer(500);
+
+        timer.Start();
 
         // some logic to continuously display the stopwatch here
-        do
+        while(timerIsRunning)
         {
-            AnsiConsole.MarkupLine(stopwatch.Elapsed.ToString());
-        } while (GetUserInput(voiceMode) != null);
+            string stopString = await GetUserInput(voiceMode);
+            Console.Clear();
+            AnsiConsole.MarkupLine($"You started a new coding session at {startTime}. Enter [bold cyan]s[/] or [bold cyan]stop[/] to stop the timer below: \n");
+            AnsiConsole.MarkupLine((DateTime.Now - startTime).ToString());
 
-        DateTime endTime = DateTime.Now;
+            if (stopString.StartsWith("s"))
+            {
+                timer.Stop();
+                endTime = DateTime.Now;
+                timerIsRunning = false;
+            }
+        }
+
+        timer.Stop();
+        timer.Dispose();
     }
 
     internal void ViewEditPastSessions(bool voiceMode)
@@ -109,7 +126,7 @@ internal class UserInterface
         while (!exitToMainMenu)
         {
             AnsiConsole.Write(ShowPastSessionsPanel());
-            userMenuChoice = GetUserInput(voiceMode);
+            userMenuChoice = GetUserInput(voiceMode).Result;
 
             switch (userMenuChoice)
             {
@@ -187,7 +204,7 @@ internal class UserInterface
                 AnsiConsole.MarkupLine(sessionInputPrompts[i % sessionInputPrompts.Length], i < sessionInputPrompts.Length ? "start" : "end");
 
                 string currentDateTimeUnit = dateTimeUnits[i % 5];
-                userInputtedDateOrTime = Validation.ValidateUserIntInput(GetUserInput(voiceMode), out errorMessage, typeOfDateUnit:currentDateTimeUnit);
+                userInputtedDateOrTime = Validation.ValidateUserIntInput(GetUserInput(voiceMode).Result, out errorMessage, typeOfDateUnit:currentDateTimeUnit);
 
                 if (!String.IsNullOrEmpty(errorMessage))
                 {
@@ -279,7 +296,7 @@ internal class UserInterface
         };
     }
 
-    internal string GetUserInput(bool voiceMode)
+    internal async Task<string> GetUserInput(bool voiceMode)
     {
         string? readResult;
         string userInput = "";

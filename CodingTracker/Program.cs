@@ -2,7 +2,8 @@
 namespace TSCA.CodingTracker;
 class Program
 {
-
+    private static readonly DatabaseManager _databaseManager = new DatabaseManager();
+    private static readonly UserInterface _userInterface = new UserInterface(_databaseManager);
     public static void Main(string[] args)
     {
         bool speechRecognitionMode = false;
@@ -17,7 +18,8 @@ class Program
             speechRecognitionMode = true;
         }
 
-        UserInterface userInterface = new UserInterface(speechRecognitionMode);
+        _userInterface.ShowMainMenu(speechRecognitionMode);
+
 
 
 
