@@ -11,10 +11,9 @@ internal class UserInterface
     private static string? speechKey = Environment.GetEnvironmentVariable("Azure_SpeechSDK_Key");
     private static string? speechRegion = Environment.GetEnvironmentVariable("Azure_SpeechRegion_Key");
 
-    internal UserInterface(bool voiceMode)
+    internal UserInterface(DatabaseManager databaseManager)
     {
-        _codingSessionController = new CodingSessionController();
-        ShowMainMenu(voiceMode);
+        _codingSessionController = new CodingSessionController(databaseManager, this);
     }
 
     internal void ShowMainMenu(bool voiceMode) // TODO if not gui mode, then spectre.console. if gui mode, then maui
@@ -96,6 +95,7 @@ internal class UserInterface
         Stopwatch stopwatch = Stopwatch.StartNew();
         System.Timers.Timer timer = new System.Timers.Timer(500);
 
+        timer.Elapsed += OnTimerElapsed;
         timer.Start();
 
         // some logic to continuously display the stopwatch here
@@ -116,6 +116,14 @@ internal class UserInterface
 
         timer.Stop();
         timer.Dispose();
+    }
+
+
+    private static void OnTimerElapsed(object sender, ElapsedEventArgs e)
+    {
+        var elapsedTime = DateTime.Now - startTime;
+        Console.Clear();
+        Console.WriteLine($"Timer running: {elapsedTime:hh\\:mm\\:ss}");
     }
 
     internal void ViewEditPastSessions(bool voiceMode)
