@@ -1,8 +1,6 @@
 ﻿using Microsoft.CognitiveServices.Speech;
 using Spectre.Console;
-using System.Diagnostics;
 using System.Text.RegularExpressions;
-using System.Timers;
 
 namespace TSCA.CodingTracker;
 internal class UserInterface
@@ -11,9 +9,9 @@ internal class UserInterface
     private static string? speechKey = Environment.GetEnvironmentVariable("Azure_SpeechSDK_Key");
     private static string? speechRegion = Environment.GetEnvironmentVariable("Azure_SpeechRegion_Key");
 
-    internal UserInterface(DatabaseManager databaseManager)
+    internal UserInterface()
     {
-        _codingSessionController = new CodingSessionController(databaseManager, this);
+        _codingSessionController = new CodingSessionController(this);
     }
 
     internal void ShowMainMenu(bool voiceMode) // TODO if not gui mode, then spectre.console. if gui mode, then maui
@@ -90,41 +88,34 @@ internal class UserInterface
     internal async void StartNewSessionNow(bool voiceMode)
     {
         DateTime startTime = DateTime.Now;
-        DateTime endTime = new();
         bool timerIsRunning = true;
-        Stopwatch stopwatch = Stopwatch.StartNew();
-        System.Timers.Timer timer = new System.Timers.Timer(500);
-
-        timer.Elapsed += OnTimerElapsed;
-        timer.Start();
+        _codingSessionController.StartNewLiveSession(startTime);
+        string stopString = GetUserInput(voiceMode).Result;
 
         // some logic to continuously display the stopwatch here
         while(timerIsRunning)
         {
-            string stopString = await GetUserInput(voiceMode);
-            Console.Clear();
-            AnsiConsole.MarkupLine($"You started a new coding session at {startTime}. Enter [bold cyan]s[/] or [bold cyan]stop[/] to stop the timer below: \n");
-            AnsiConsole.MarkupLine((DateTime.Now - startTime).ToString());
-
             if (stopString.StartsWith("s"))
             {
-                timer.Stop();
-                endTime = DateTime.Now;
+                _codingSessionController.StopCurrentLiveSession();     
                 timerIsRunning = false;
             }
         }
 
-        timer.Stop();
-        timer.Dispose();
     }
 
-
-    private static void OnTimerElapsed(object sender, ElapsedEventArgs e)
+    internal void DisplayMessage(string message)
     {
-        var elapsedTime = DateTime.Now - startTime;
-        Console.Clear();
-        Console.WriteLine($"Timer running: {elapsedTime:hh\\:mm\\:ss}");
+        AnsiConsole.MarkupLine(message);
     }
+
+    internal void DisplayTimer(TimeSpan elapsedTime)
+    {
+        Console.Clear();
+        AnsiConsole.MarkupLine($"Time elapsed since you began this coding session: {elapsedTime:hh\\:mm\\:ss}");
+        AnsiConsole.MarkupLine("Enter [bold aqua]stop[/] to stop the session.");
+    }
+
 
     internal void ViewEditPastSessions(bool voiceMode)
     {
@@ -265,7 +256,7 @@ internal class UserInterface
             // TODO -- maybe confirm the start / end before writing to the database?
         }
 
-        _codingSessionController.CreateSession(startTime, endTime);
+        _codingSessionController.WriteSessionToDatabase(startTime, endTime);
     }
 
     internal Panel CreateNewSessionPanel()
