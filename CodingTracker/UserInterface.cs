@@ -89,8 +89,15 @@ internal class UserInterface
     {
         DateTime startTime = DateTime.Now;
         bool timerIsRunning = true;
+        string stopString = "";
+
         _codingSessionController.StartNewLiveSession(startTime);
-        string stopString = GetUserInput(voiceMode).Result;
+
+        new Thread(() =>
+        {
+            Thread.CurrentThread.IsBackground = true;
+            stopString = GetUserInput(voiceMode).Result;
+        }).Start();
 
         // some logic to continuously display the stopwatch here
         while(timerIsRunning)
@@ -104,14 +111,18 @@ internal class UserInterface
 
     }
 
-    internal void DisplayMessage(string message)
+    internal void DisplayMessage(string message, bool clearConsole=false)
     {
+        if (clearConsole)
+        {
+            Console.Clear();
+        }
         AnsiConsole.MarkupLine(message);
     }
 
-    internal void DisplayTimer(TimeSpan elapsedTime)
+    internal void DisplayTimer(TimeSpan elapsedTime, DateTime startTime)
     {
-        Console.Clear();
+        Console.SetCursorPosition(0, 2);
         AnsiConsole.MarkupLine($"Time elapsed since you began this coding session: {elapsedTime:hh\\:mm\\:ss}");
         AnsiConsole.MarkupLine("Enter [bold aqua]stop[/] to stop the session.");
     }

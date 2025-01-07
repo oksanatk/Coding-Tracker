@@ -24,10 +24,13 @@ internal class CodingSessionController
     internal void StartNewLiveSession(DateTime startTime)
     {
         currentLiveSession = new CodingSession(startTime);
-        currentLiveSession.TimerElapsed += _userInterface.DisplayTimer;
+        currentLiveSession.TimerElapsed += elapsedTime => 
+            {
+            _userInterface.DisplayTimer(currentLiveSession.duration, currentLiveSession.startTime);
+            };
         currentLiveSession.StartTimer();
 
-        _userInterface.DisplayMessage($"You started a new coding session at {startTime}. Enter [bold cyan]s[/] or [bold cyan]stop[/] to stop the timer below: \n");
+        _userInterface.DisplayMessage($"You started a new coding session at {startTime}. \n", clearConsole: true);
     }
 
     internal void StopCurrentLiveSession()
