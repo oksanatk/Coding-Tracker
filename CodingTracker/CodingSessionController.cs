@@ -54,10 +54,23 @@ internal class CodingSessionController
 
     internal List<String> StatsAboutSessions()
     {
+        sessions = ReadAllPastSessions();
+        
         // TODO : What to include: 
             // filter: user input: can view: past #of days / weeks / month / year
             // sort: user input : ascending or descending
             // stats: total and average hours per period selected
+
+        // okay then, so FilterPerPeriod(List<CodingSession> allCurrentSessions)    will be a different method than SortAscendingDescending()
+        //      and again, different function to get total and avg duration per filteredPeriod
+
+
+        // What would be cool things to put in here?
+            // live updating menu-thing
+                //
+            // spectre selectionPrompt -- but will it work with voiceMode?
+                // okay, this is the last project like this for a hot second, that requires voice-mode. won't do now, maybe later
+
 
             
 

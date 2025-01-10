@@ -139,6 +139,7 @@ internal class UserInterface
             {
                 case "1":
                 case "one":
+                    Console.Clear();
                     AnsiConsole.Write(ShowPastRecordsPanel(_codingSessionController.ReadAllPastSessions())); 
                     // ViewPastSessionsAndStats()  --> split method into print past sessions and controller CalculateStats
                     break;
@@ -302,6 +303,35 @@ internal class UserInterface
             Border = BoxBorder.Square,
             Header = new PanelHeader("Past Coding Sessions")
         };
+    }
+
+    internal void FilterSortPastSessionsPrompt(bool voiceMode, out int customPeriodLength, out string periodUnit, out int sortOrNot)
+    {
+        customPeriodLength = 0;
+        periodUnit = "";
+        sortOrNot = 0;
+        string userInput = "";
+        int userIntInput = -1;
+        string errorMessage = "";
+
+        string[] inputPrompts =
+        {
+            "Did you want to show [bold yellow]all[/] past records? We could alternatively filter them. (y/n)",
+            "Which unit of time should we be filtering by? (The options are [bold yellow]days[/], [bold yellow]weeks[/], [bold yellow]months[/], or [bold yellow]years[/].",
+            "How many periods did you want to view? (##)",
+            "Did you want to sort by session length? Please enter [aqua]ascending[/] or [aqua]descending[/] to choose."
+        };
+
+        for (int i =0;i<inputPrompts.Length;i++)
+        {
+            AnsiConsole.MarkupLine(inputPrompts[i]);
+            userInput = GetUserInput(voiceMode).Result;
+
+            if (i==1)
+            {
+                userIntInput = Validation.ValidateUserIntInput(userInput, out errorMessage);
+            }
+        }
     }
 
     internal Panel ShowPastRecordsPanel(List<CodingSession> sessions)
