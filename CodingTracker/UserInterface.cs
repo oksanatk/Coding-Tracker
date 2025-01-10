@@ -54,7 +54,7 @@ internal class UserInterface
         AnsiConsole.Clear();
         while (!exitToMainMenu)
         {
-            AnsiConsole.Write(CreateNewSessionPanel());
+            AnsiConsole.Write(CreateNewSessionMenuOptions());
             userMenuChoice = GetUserInput(voiceMode).Result;
 
             switch (userMenuChoice)
@@ -85,7 +85,7 @@ internal class UserInterface
         }
     }
 
-    internal async void StartNewSessionNow(bool voiceMode)
+    internal void StartNewSessionNow(bool voiceMode)
     {
         DateTime startTime = DateTime.Now;
         bool timerIsRunning = true;
@@ -99,7 +99,6 @@ internal class UserInterface
             stopString = GetUserInput(voiceMode).Result;
         }).Start();
 
-        // some logic to continuously display the stopwatch here
         while(timerIsRunning)
         {
             if (stopString.StartsWith("s"))
@@ -108,7 +107,6 @@ internal class UserInterface
                 timerIsRunning = false;
             }
         }
-
     }
 
     internal void DisplayMessage(string message, bool clearConsole=false)
@@ -127,7 +125,6 @@ internal class UserInterface
         AnsiConsole.MarkupLine("Enter [bold aqua]stop[/] to stop the session.");
     }
 
-
     internal void ViewEditPastSessions(bool voiceMode)
     {
         string userMenuChoice = "";
@@ -135,13 +132,14 @@ internal class UserInterface
 
         while (!exitToMainMenu)
         {
-            AnsiConsole.Write(ShowPastSessionsPanel());
+            AnsiConsole.Write(ShowExistingRecordsMenuOptions());
             userMenuChoice = GetUserInput(voiceMode).Result;
 
             switch (userMenuChoice)
             {
                 case "1":
                 case "one":
+                    AnsiConsole.Write(ShowPastRecordsPanel(_codingSessionController.ReadAllPastSessions())); 
                     // ViewPastSessionsAndStats()  --> split method into print past sessions and controller CalculateStats
                     break;
                 case "2":
@@ -270,7 +268,7 @@ internal class UserInterface
         _codingSessionController.WriteSessionToDatabase(startTime, endTime);
     }
 
-    internal Panel CreateNewSessionPanel()
+    internal Panel CreateNewSessionMenuOptions()
     {
         Grid grid = new();
         grid.AddColumn();
@@ -287,7 +285,7 @@ internal class UserInterface
         };
     }
 
-    internal Panel ShowPastSessionsPanel()
+    internal Panel ShowExistingRecordsMenuOptions()
     {
         Grid grid = new();
         grid.AddColumn();
@@ -303,6 +301,30 @@ internal class UserInterface
         {
             Border = BoxBorder.Square,
             Header = new PanelHeader("Past Coding Sessions")
+        };
+    }
+
+    internal Panel ShowPastRecordsPanel(List<CodingSession> sessions)
+    {
+        Grid grid = new();
+        grid.AddColumn();
+        grid.AddColumn();
+        grid.AddColumn();
+        grid.AddColumn();
+
+        grid.AddRow("[bold yellow]ID[/]", "[bold yellow]Start Time[/]", "[bold yellow]End Time[/]", "[bold yellow]Duration[/]");
+        grid.AddEmptyRow();
+
+        foreach (CodingSession session in sessions)
+        {
+            grid.AddRow(new string[] { session.id.ToString(), session.startTime.ToString(), session.endTime.ToString(), session.duration.ToString("hh\\:mm\\:ss") });
+        }
+        grid.AddEmptyRow();
+
+        return new Panel(grid)
+        {
+            Header = new PanelHeader("Past Sessions Recorded"),
+            Border = BoxBorder.Square,
         };
     }
 

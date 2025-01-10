@@ -47,7 +47,23 @@ internal class CodingSessionController
         WriteSessionToDatabase(currentLiveSession.startTime, currentLiveSession.endTime);
     }
 
-    internal void ReadSession() { } // also include a view that 
+    internal List<CodingSession> ReadAllPastSessions() 
+    {
+        return _databaseManager.ReadAllPastSessions();
+    }
+
+    internal List<String> StatsAboutSessions()
+    {
+        // TODO : What to include: 
+            // filter: user input: can view: past #of days / weeks / month / year
+            // sort: user input : ascending or descending
+            // stats: total and average hours per period selected
+
+            
+
+
+        return new List<String>();
+    }
 
     internal void UpdateSession() { }
 
