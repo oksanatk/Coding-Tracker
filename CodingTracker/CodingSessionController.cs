@@ -56,7 +56,7 @@ internal class CodingSessionController
 
     internal List<CodingSession> FilterSortPastRecordsToBeViewed(string periodUnit="", int numberOfPeriodUnits=1, string sortType="no")
     {
-        List<CodingSession> filteredSessions = this.sessions;
+        List<CodingSession> filteredSessions = ReadAllPastSessions();
 
         if (!String.IsNullOrEmpty(periodUnit))
         {

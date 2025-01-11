@@ -145,7 +145,6 @@ internal class UserInterface
                     
                     Console.Clear();
                     FilterSortPastSessionsPrompt(voiceMode, out periodLengthCount, out periodLengthUnit, out sortType);
-                    _codingSessionController.ReadAllPastSessions();
 
                     AnsiConsole.WriteLine();
                     AnsiConsole.Write(ShowPastRecordsPanel(_codingSessionController.FilterSortPastRecordsToBeViewed(periodLengthUnit,periodLengthCount,sortType))); 
