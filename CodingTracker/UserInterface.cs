@@ -139,9 +139,20 @@ internal class UserInterface
             {
                 case "1":
                 case "one":
+                    string periodLengthUnit;
+                    int periodLengthCount;
+                    string sortType;
+                    
                     Console.Clear();
-                    AnsiConsole.Write(ShowPastRecordsPanel(_codingSessionController.ReadAllPastSessions())); 
+                    FilterSortPastSessionsPrompt(voiceMode, out periodLengthCount, out periodLengthUnit, out sortType);
+                    _codingSessionController.ReadAllPastSessions();
+
+                    AnsiConsole.WriteLine();
+                    AnsiConsole.Write(ShowPastRecordsPanel(_codingSessionController.FilterSortPastRecordsToBeViewed(periodLengthUnit,periodLengthCount,sortType))); 
+
                     // ViewPastSessionsAndStats()  --> split method into print past sessions and controller CalculateStats
+
+                    // TOOD --> maybe a 'continue'? query before displaying the secondary panel again?
                     break;
                 case "2":
                 case "two":
@@ -305,21 +316,31 @@ internal class UserInterface
         };
     }
 
-    internal void FilterSortPastSessionsPrompt(bool voiceMode, out int customPeriodLength, out string periodUnit, out int sortOrNot)
+    internal void FilterSortPastSessionsPrompt(bool voiceMode, out int customPeriodLength, out string periodUnit, out string sortType)
     {
-        customPeriodLength = 0;
+        customPeriodLength = 1;
         periodUnit = "";
-        sortOrNot = 0;
+        sortType = "";
         string userInput = "";
         int userIntInput = -1;
         string errorMessage = "";
 
         string[] inputPrompts =
         {
-            "Did you want to show [bold yellow]all[/] past records? We could alternatively filter them. (y/n)",
-            "Which unit of time should we be filtering by? (The options are [bold yellow]days[/], [bold yellow]weeks[/], [bold yellow]months[/], or [bold yellow]years[/].",
-            "How many periods did you want to view? (##)",
-            "Did you want to sort by session length? Please enter [aqua]ascending[/] or [aqua]descending[/] to choose."
+            "Did you want to show all past records? We could alternatively filter them by time periods. [bold yellow](y/n)[/]",
+            "We can filter by a custom number of one of the following: [bold yellow]days[/], [bold yellow]weeks[/], [bold yellow]months[/], or [bold yellow]years[/].",
+            "How many periods did you want to view? (##) Default is 1.",
+            "Did you want to sort by [bold yellow]shortest[/] first, [bold yellow]longest[/] first, [bold yellow]newest[/] first, or [bold yellow]oldest[/] first? You can enter [bold yellow]no[/] if you would like to see them in order of id."
+        };
+
+        string[] timePeriodUnits =
+        {
+            "days","weeks","months","years"
+        };
+
+        string[] sortByUnits =
+        {
+            "shortest","longest", "newest", "oldest", "no"
         };
 
         for (int i =0;i<inputPrompts.Length;i++)
@@ -327,9 +348,48 @@ internal class UserInterface
             AnsiConsole.MarkupLine(inputPrompts[i]);
             userInput = GetUserInput(voiceMode).Result;
 
-            if (i==1)
+            switch (i)
             {
-                userIntInput = Validation.ValidateUserIntInput(userInput, out errorMessage);
+                case 0:
+                    if (userInput.StartsWith("y"))
+                    {
+                        i = 2;
+                    }
+                    break;
+
+                case 1: 
+                    if (timePeriodUnits.Contains(userInput))
+                    {
+                        periodUnit = userInput;
+                    } else
+                    {
+                        AnsiConsole.MarkupLine("Sorry, but I didn't recognize that period of time. Please try again.");
+                        i = 0;
+                    }
+                    break;
+
+                case 2:
+                    userIntInput = Validation.ValidateUserIntInput(userInput, out errorMessage, periodUnit);
+                    if (String.IsNullOrEmpty(errorMessage))
+                    {
+                        customPeriodLength = 1;
+                    } else
+                    {
+                        AnsiConsole.MarkupLine(errorMessage);
+                        i = 1;
+                    }
+                    break;
+
+                case 3:
+                    if (sortByUnits.Contains(userInput))
+                    {
+                        sortType = userInput;
+                    } else
+                    {
+                        AnsiConsole.MarkupLine("I'm sorry, but I didn't understand how you want to sort the coding session records. Please try again.");
+                        i = 2;
+                    }
+                    break;
             }
         }
     }

@@ -49,8 +49,77 @@ internal class CodingSessionController
 
     internal List<CodingSession> ReadAllPastSessions() 
     {
-        return _databaseManager.ReadAllPastSessions();
+        List<CodingSession> readFromDatabase = _databaseManager.ReadAllPastSessions();
+        this.sessions = readFromDatabase;
+        return readFromDatabase;
     }
+
+    internal List<CodingSession> FilterSortPastRecordsToBeViewed(string periodUnit="", int numberOfPeriodUnits=1, string sortType="no")
+    {
+        List<CodingSession> filteredSessions = this.sessions;
+
+        if (!String.IsNullOrEmpty(periodUnit))
+        {
+            DateTime oldestToShow = CalculateOldestDateTime(periodUnit, numberOfPeriodUnits);
+            filteredSessions = filteredSessions.Where(session => session.startTime > oldestToShow).ToList();
+        } 
+        
+        if (!String.IsNullOrEmpty(sortType) || sortType != "no")
+        {
+            switch (sortType)
+            {
+                case "newest":
+                    filteredSessions.Sort((x, y) => DateTime.Compare(y.startTime, x.startTime));
+                    break;
+
+                case "oldest": // TODO -> research? why does the datetime comparer work in reverse of the timespan one?
+                    filteredSessions.Sort((x, y) => DateTime.Compare(x.startTime, y.startTime));
+                    break;
+
+                case "shortest":
+                    filteredSessions.Sort((x, y) => TimeSpan.Compare(x.duration, y.duration));
+                    break;
+
+                case "longest":
+                    filteredSessions.Sort((x, y) => TimeSpan.Compare(y.duration, x.duration));
+                    break;
+            }
+        }
+
+        return filteredSessions; 
+    }
+
+    private List<CodingSession> SortPastCodingSessionRecords(string sortType, List<CodingSession> sessions)
+    {
+
+
+        return sessions;
+    }
+    private DateTime CalculateOldestDateTime(string periodUnit, int numberOfPeriods)
+    {
+        DateTime oldestToShow = DateTime.Now;
+
+        switch (periodUnit)
+        {
+            case "days":
+                oldestToShow = oldestToShow.AddDays(numberOfPeriods * -1);
+                break;
+
+            case "weeks":
+                oldestToShow = oldestToShow.AddDays(numberOfPeriods * -7);
+                break;
+
+            case "months":
+                oldestToShow = oldestToShow.AddMonths(numberOfPeriods * -1);
+                break;
+
+            case "years":
+                oldestToShow = oldestToShow.AddYears(numberOfPeriods * -1);
+                break;
+        }
+        return oldestToShow;
+    }
+
 
     internal List<String> StatsAboutSessions()
     {
