@@ -54,7 +54,7 @@ internal class CodingSessionController
         return readFromDatabase;
     }
 
-    internal List<CodingSession> FilterSortPastRecordsToBeViewed(string periodUnit="", int numberOfPeriodUnits=1, string sortType="no")
+    internal List<CodingSession> FilterSortPastRecordsToBeViewed(out TimeSpan[] totalAverageTimes, string periodUnit="", int numberOfPeriodUnits=1, string sortType="no")
     {
         List<CodingSession> filteredSessions = ReadAllPastSessions();
 
@@ -63,6 +63,8 @@ internal class CodingSessionController
             DateTime oldestToShow = CalculateOldestDateTime(periodUnit, numberOfPeriodUnits);
             filteredSessions = filteredSessions.Where(session => session.startTime > oldestToShow).ToList();
         } 
+
+        totalAverageTimes = CalculateSessionTimeAverageTotal(filteredSessions);
         
         if (!String.IsNullOrEmpty(sortType) || sortType != "no")
         {
@@ -72,7 +74,7 @@ internal class CodingSessionController
                     filteredSessions.Sort((x, y) => DateTime.Compare(y.startTime, x.startTime));
                     break;
 
-                case "oldest": // TODO -> research? why does the datetime comparer work in reverse of the timespan one?
+                case "oldest": 
                     filteredSessions.Sort((x, y) => DateTime.Compare(x.startTime, y.startTime));
                     break;
 
@@ -89,12 +91,20 @@ internal class CodingSessionController
         return filteredSessions; 
     }
 
-    private List<CodingSession> SortPastCodingSessionRecords(string sortType, List<CodingSession> sessions)
+    private TimeSpan[] CalculateSessionTimeAverageTotal(List<CodingSession> filteredSessions)
     {
+        TimeSpan total = new();
+        TimeSpan average;
 
+        foreach (CodingSession session in filteredSessions)
+        {
+            total += session.duration;
+        }
+        average = total / filteredSessions.Count;
 
-        return sessions;
+        return new TimeSpan[] { total, average };
     }
+
     private DateTime CalculateOldestDateTime(string periodUnit, int numberOfPeriods)
     {
         DateTime oldestToShow = DateTime.Now;
@@ -118,33 +128,6 @@ internal class CodingSessionController
                 break;
         }
         return oldestToShow;
-    }
-
-
-    internal List<String> StatsAboutSessions()
-    {
-        sessions = ReadAllPastSessions();
-        
-        // TODO : What to include: 
-            // filter: user input: can view: past #of days / weeks / month / year
-            // sort: user input : ascending or descending
-            // stats: total and average hours per period selected
-
-        // okay then, so FilterPerPeriod(List<CodingSession> allCurrentSessions)    will be a different method than SortAscendingDescending()
-        //      and again, different function to get total and avg duration per filteredPeriod
-
-
-        // What would be cool things to put in here?
-            // live updating menu-thing
-                //
-            // spectre selectionPrompt -- but will it work with voiceMode?
-                // okay, this is the last project like this for a hot second, that requires voice-mode. won't do now, maybe later
-
-
-            
-
-
-        return new List<String>();
     }
 
     internal void UpdateSession() { }

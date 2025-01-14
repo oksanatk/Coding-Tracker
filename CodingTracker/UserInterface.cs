@@ -26,7 +26,7 @@ internal class UserInterface
             AnsiConsole.Clear();
             AnsiConsole.Write(mainMenuPanel);
 
-            userMainMenuOption = GetUserInput(voiceMode).Result;
+            userMainMenuOption = GetUserInput(voiceMode);
             switch (userMainMenuOption)
             {
                 case "1":
@@ -34,7 +34,7 @@ internal class UserInterface
                     CreateNewSessionMenu(voiceMode);
                     break;
                 case "2": case "two":
-                    ViewEditPastSessions(voiceMode);
+                    ViewEditPastSessionsMenu(voiceMode);
                     break;
                 case "exit":
                     endApp = true;
@@ -55,18 +55,13 @@ internal class UserInterface
         while (!exitToMainMenu)
         {
             AnsiConsole.Write(CreateNewSessionMenuOptions());
-            userMenuChoice = GetUserInput(voiceMode).Result;
+            userMenuChoice = GetUserInput(voiceMode);
 
             switch (userMenuChoice)
             {
                 case "1":
                 case "one":
                     StartNewSessionNow(voiceMode);
-                    // multiple methods here: new coding session now in controller lauchnes new stopwatch on screen
-                        // 1. accept input: press any key to start, then any key again to stop. After stopping, coding session will finalize for that length of time.
-                        // 2. while session, keep printing, deleting, and re-printing the current session time.
-
-                        // System.Diagnositics.Stopwatch stopwatch = new Stopwatch.StartNew()
                     break;
 
                 case "2":
@@ -96,7 +91,7 @@ internal class UserInterface
         new Thread(() =>
         {
             Thread.CurrentThread.IsBackground = true;
-            stopString = GetUserInput(voiceMode).Result;
+            stopString = GetUserInput(voiceMode);
         }).Start();
 
         while(timerIsRunning)
@@ -125,49 +120,39 @@ internal class UserInterface
         AnsiConsole.MarkupLine("Enter [bold aqua]stop[/] to stop the session.");
     }
 
-    internal void ViewEditPastSessions(bool voiceMode)
+    internal void ViewEditPastSessionsMenu(bool voiceMode)
     {
         string userMenuChoice = "";
         bool exitToMainMenu = false;
 
         while (!exitToMainMenu)
         {
+            Console.Clear();
             AnsiConsole.Write(ShowExistingRecordsMenuOptions());
-            userMenuChoice = GetUserInput(voiceMode).Result;
+            userMenuChoice = GetUserInput(voiceMode);
 
             switch (userMenuChoice)
             {
-                case "1":
-                case "one":
-                    string periodLengthUnit;
-                    int periodLengthCount;
-                    string sortType;
-                    
-                    Console.Clear();
-                    FilterSortPastSessionsPrompt(voiceMode, out periodLengthCount, out periodLengthUnit, out sortType);
-
-                    AnsiConsole.WriteLine();
-                    AnsiConsole.Write(ShowPastRecordsPanel(_codingSessionController.FilterSortPastRecordsToBeViewed(periodLengthUnit,periodLengthCount,sortType))); 
-
-                    // ViewPastSessionsAndStats()  --> split method into print past sessions and controller CalculateStats
-
-                    // TOOD --> maybe a 'continue'? query before displaying the secondary panel again?
+                case "1": case "one":
+                    ShowFilteredPastRecords(voiceMode);
                     break;
-                case "2":
-                case "two":
+
+                case "2": case "two":
                     // UpdatePastSessionRecord() 
                     break;
-                case "3":
-                case "three":
+
+                case "3": case "three":
                     // DeletePastSessionRecord() --> Split into mutliple methods: PrintPastSessions: ValidateIntInput(GetUserInput()) : then send to 
                     break;
-                case "4":
-                case "four":
+
+                case "4": case "four":
                     // CalculateCodingGoal()
                     break;
+
                 case "exit":
                     exitToMainMenu = true;
                     break;
+
                 default:
                     AnsiConsole.MarkupLine("I'm sorry, but I didn't understand that menu option. Please try again.");
                     break;
@@ -223,7 +208,7 @@ internal class UserInterface
                 AnsiConsole.MarkupLine(sessionInputPrompts[i % sessionInputPrompts.Length], i < sessionInputPrompts.Length ? "start" : "end");
 
                 string currentDateTimeUnit = dateTimeUnits[i % 5];
-                userInputtedDateOrTime = Validation.ValidateUserIntInput(GetUserInput(voiceMode).Result, out errorMessage, typeOfDateUnit:currentDateTimeUnit);
+                userInputtedDateOrTime = Validation.ValidateUserIntInput(GetUserInput(voiceMode), out errorMessage, typeOfDateUnit:currentDateTimeUnit);
 
                 if (!String.IsNullOrEmpty(errorMessage))
                 {
@@ -345,7 +330,7 @@ internal class UserInterface
         for (int i =0;i<inputPrompts.Length;i++)
         {
             AnsiConsole.MarkupLine(inputPrompts[i]);
-            userInput = GetUserInput(voiceMode).Result;
+            userInput = GetUserInput(voiceMode);
 
             switch (i)
             {
@@ -393,7 +378,7 @@ internal class UserInterface
         }
     }
 
-    internal Panel ShowPastRecordsPanel(List<CodingSession> sessions)
+    internal Panel ShowPastRecordsPanel(List<CodingSession> sessions, TimeSpan[] totalAverageTimes)
     {
         Grid grid = new();
         grid.AddColumn();
@@ -410,6 +395,10 @@ internal class UserInterface
         }
         grid.AddEmptyRow();
 
+        grid.AddRow("","","[yellow]Total Time Coding:[/]", totalAverageTimes[0].ToString("hh\\:mm\\:ss"));
+        grid.AddRow("","","[yellow]Average Time Coding: [/]", totalAverageTimes[1].ToString("hh\\:mm\\:ss"));
+        grid.AddEmptyRow();
+
         return new Panel(grid)
         {
             Header = new PanelHeader("Past Sessions Recorded"),
@@ -417,7 +406,27 @@ internal class UserInterface
         };
     }
 
-    internal async Task<string> GetUserInput(bool voiceMode)
+    internal void ShowFilteredPastRecords(bool voiceMode)
+    {
+        string periodLengthUnit;
+        int periodLengthCount;
+        string sortType;
+        TimeSpan[] totalAverageTimes;
+        List<CodingSession> sessions = new();
+
+        Console.Clear();
+        FilterSortPastSessionsPrompt(voiceMode, out periodLengthCount, out periodLengthUnit, out sortType);
+
+        AnsiConsole.WriteLine();
+        sessions = _codingSessionController.FilterSortPastRecordsToBeViewed(out totalAverageTimes, periodLengthUnit, periodLengthCount, sortType);
+
+        AnsiConsole.Write(ShowPastRecordsPanel(sessions, totalAverageTimes));
+
+        AnsiConsole.MarkupLine(voiceMode ? "\nSay [bold yellow]Continue[/] to continue back to the menu." : "\nPress [bold yellow]Enter[/] to continue back to the menu.");
+        GetUserInput(voiceMode);
+    }
+
+    internal String GetUserInput(bool voiceMode)
     {
         string? readResult;
         string userInput = "";
