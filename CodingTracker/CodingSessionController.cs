@@ -1,12 +1,12 @@
-﻿
+﻿namespace TSCA.CodingTracker;
 
-namespace TSCA.CodingTracker;
 internal class CodingSessionController
 {
     internal readonly DatabaseManager _databaseManager;
     internal readonly UserInterface _userInterface;
     List<CodingSession> sessions = new();
     CodingSession? currentLiveSession;
+
     internal CodingSessionController(UserInterface userInterface)
     {
         _userInterface = userInterface;
@@ -87,7 +87,6 @@ internal class CodingSessionController
                     break;
             }
         }
-
         return filteredSessions; 
     }
 
@@ -128,6 +127,19 @@ internal class CodingSessionController
                 break;
         }
         return oldestToShow;
+    }
+
+    internal TimeSpan[] CalculateHoursUntilGoal(int goalInHours, int daysLeft)
+    {
+        sessions = this.ReadAllPastSessions();
+        TimeSpan[] currentTotals = CalculateSessionTimeAverageTotal(sessions);
+        TimeSpan currentTotal = currentTotals[0];
+
+        TimeSpan goal = new TimeSpan(goalInHours, 0, 0);
+        TimeSpan hoursLeft = goal - currentTotal;
+        TimeSpan averagePerDay = hoursLeft / daysLeft;
+
+        return new TimeSpan[] { hoursLeft, averagePerDay };
     }
 
     internal void UpdateSession(int id, DateTime startTime, DateTime endTime)

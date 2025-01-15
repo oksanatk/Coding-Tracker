@@ -3,6 +3,7 @@ using Spectre.Console;
 using System.Text.RegularExpressions;
 
 namespace TSCA.CodingTracker;
+
 internal class UserInterface
 {
     private readonly CodingSessionController _codingSessionController;
@@ -14,7 +15,7 @@ internal class UserInterface
         _codingSessionController = new CodingSessionController(this);
     }
 
-    internal void ShowMainMenu(bool voiceMode) // TODO if not gui mode, then spectre.console. if gui mode, then maui
+    internal void ShowMainMenu(bool voiceMode)
     {
         bool endApp = false;
         string userMainMenuOption = "";
@@ -213,7 +214,6 @@ internal class UserInterface
                 else
                 {
                     AnsiConsole.MarkupLine("That date was invalid for some reason. Please try again.");
-                    // TODO - possible infinitely stuck loop here. Create escape back to main menu if needed
                     dateTimePieces.Clear();
                     i = sessionInputPrompts.Length-1;
                 }
@@ -224,7 +224,10 @@ internal class UserInterface
                     i = sessionInputPrompts.Length-1;
                 }
             }
-            // TODO -- maybe confirm the start / end before writing to the database?
+            AnsiConsole.MarkupLine("You're creating a new record of a coding session that: \n\tStarted on:[bold yellow]{startTime.ToString()}\n\tEnded on:{endTime.ToString()}");
+
+            AnsiConsole.MarkupLine(voiceMode ? "Say [yellow]Continue[/] to continue." : "Press the [bold yellow]Enter[/] key to continue.");
+            GetUserInput(voiceMode);
         }
 
         return new DateTime[] {startTime, endTime}; 
@@ -256,7 +259,7 @@ internal class UserInterface
                     break;
 
                 case "4": case "four":
-                    // CalculateCodingGoal()
+                    GoalCalculationPrompt(voiceMode);
                     break;
 
                 case "exit":
@@ -295,7 +298,7 @@ internal class UserInterface
         grid.AddRow("[aqua]1[/] - View all past coding sessions and associated stats");
         grid.AddRow("[aqua]2[/] - Update a past coding session");
         grid.AddRow("[aqua]3[/] - Delete a past coding session");
-        grid.AddRow("[aqua]4[/] - Calculate hours needed to meet your coding goal"); // result ouputted in hours of coding per day, per week, per month, per year 
+        grid.AddRow("[aqua]4[/] - Calculate hours needed to meet your coding goal"); 
         grid.AddEmptyRow();
         grid.AddRow("OR enter [aqua]exit[/] to exit back to the main menu.");
 
@@ -391,7 +394,6 @@ internal class UserInterface
         grid.AddColumn();
         grid.AddColumn();
         grid.AddColumn();
-
         grid.AddRow("[bold yellow]ID[/]", "[bold yellow]Start Time[/]", "[bold yellow]End Time[/]", "[bold yellow]Duration[/]");
         grid.AddEmptyRow();
 
@@ -499,6 +501,59 @@ internal class UserInterface
         } while (!validIdSelected);
 
         _codingSessionController.DeleteSession(userIdSelection);
+    }
+
+    internal void GoalCalculationPrompt(bool voiceMode)
+    {
+        bool validTimeSelected;
+        string errorMessage = "";
+        int codingHoursGoal = -1;
+        int daysToCodeGoal = -1;
+        TimeSpan[] totalAverageLeft;
+
+        string[] prompts = new string[]
+        {
+            "Please enter your coding goal, expressed in [yellow]hours[/] of time coding. (##)",
+            "Please enter how many [yellow]days[/] (##) you have left to meet this goal."
+        };
+        
+        Console.Clear();
+
+        for (int i = 0; i < prompts.Length; i++)
+        {
+            validTimeSelected = false;
+            errorMessage = "";
+
+            while (!validTimeSelected)
+            {
+                AnsiConsole.MarkupLine(prompts[i]);
+
+                if (i == 0)
+                {
+                    codingHoursGoal = Validation.ValidateUserIntInput(GetUserInput(voiceMode), out errorMessage);
+                } else
+                {
+                    daysToCodeGoal = Validation.ValidateUserIntInput(GetUserInput(voiceMode), out errorMessage);
+                }
+                validTimeSelected = errorMessage == "" ? true : false;
+
+                if (errorMessage != "")
+                {
+                    AnsiConsole.MarkupLine(errorMessage);
+                    AnsiConsole.MarkupLine(voiceMode ? "\nSay anything to continue." : "Press the [bold yellow]Enter[/] key to continue.");
+                    GetUserInput(voiceMode);
+                }
+            }
+        }
+        totalAverageLeft = _codingSessionController.CalculateHoursUntilGoal(codingHoursGoal, daysToCodeGoal);
+
+        AnsiConsole.MarkupLine($"\nBased on your goal of [bold yellow]{codingHoursGoal}[/] hours over [bold yellow]{daysToCodeGoal}[/] days, we've calculated that you need: \n");
+
+        AnsiConsole.MarkupLine($"\t[bold yellow]{Math.Floor(totalAverageLeft[0].TotalHours)} hours, {totalAverageLeft[0].Minutes} minutes, and {totalAverageLeft[0].Seconds} seconds[/] until you reach your goal!");
+        AnsiConsole.MarkupLine($"\tThis means coding [bold yellow]{Math.Floor(totalAverageLeft[1].TotalHours)} hours, {totalAverageLeft[1].Minutes} minutes, and {totalAverageLeft[1].Seconds} seconds[/] every day that you have left.");
+
+        AnsiConsole.MarkupLine(voiceMode ? "\nSay anything to continue." : "\nPress the [bold yellow]Enter[/] key to continue.");
+        GetUserInput(voiceMode);
     }
 
     internal String GetUserInput(bool voiceMode)

@@ -1,11 +1,5 @@
-﻿using Spectre.Console;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿namespace TSCA.CodingTracker;
 
-namespace TSCA.CodingTracker;
 internal static class Validation
 {
     internal static string ParseDate(DateTime date)
@@ -15,13 +9,6 @@ internal static class Validation
 
     internal static int ValidateUserIntInput(string maybeNumber, out string errorMessage, string typeOfDateUnit ="")
     {
-        //validateUserIntInput = 
-        // they input in GetUserInput(voiceMode) method in UserInterface
-        // send the anything-input to ValidateIntInput()
-        //  if errorMessage != "", then input was valid for the type of input entered
-        //     and string maybeNumber should be now assigned to the int realNumberValue, which is returned to the user.
-        //        if return value == -1, then either input string wasn't a number, or some other problem occured in the method.
-
         int realNumberValue = -1;
         errorMessage = "";
         typeOfDateUnit = typeOfDateUnit.Trim().ToLower();

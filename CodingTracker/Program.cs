@@ -1,8 +1,6 @@
-﻿using System.Configuration;
-namespace TSCA.CodingTracker;
+﻿namespace TSCA.CodingTracker;
 class Program
 {
-    private static readonly DatabaseManager _databaseManager = new DatabaseManager();
     private static readonly UserInterface _userInterface = new UserInterface();
     public static void Main(string[] args)
     {
@@ -19,14 +17,6 @@ class Program
         }
 
         _userInterface.ShowMainMenu(speechRecognitionMode);
-
-
-
-
-
-        string? sAttr = ConfigurationManager.AppSettings.Get("Key0");
-        Console.WriteLine($"the value of key0 is: {sAttr}");
-
     }
 }
 
