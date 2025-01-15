@@ -28,6 +28,7 @@ internal static class Validation
 
         Dictionary<string, Func<int,string>> validationForDateTime = new Dictionary<string, Func<int, string>>
         {
+            {"", num => num >=0 ? "" : "Sorry, but we don't really have a use for negative numbers."},
             {"year", num => num>1500 && num<=2500 ? "" : "Wow! You must live in another age. We can only do years between 1000 and 3000. Please try again." },
             {"month", num=> num >= 0 && num <= 12 ? "" : "Woah! I don't know what cool calendar you're on, but ours only has months between 1 and 12." },
             {"day", num => num >=1 && num <=31 ? "" : "Woah! I don't know which cool time system you're on, but our months only have days between 1 and 31. Please try again."},

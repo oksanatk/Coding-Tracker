@@ -6,7 +6,7 @@ internal class CodingSessionController
     internal readonly DatabaseManager _databaseManager;
     internal readonly UserInterface _userInterface;
     List<CodingSession> sessions = new();
-    CodingSession currentLiveSession;
+    CodingSession? currentLiveSession;
     internal CodingSessionController(UserInterface userInterface)
     {
         _userInterface = userInterface;
@@ -130,8 +130,15 @@ internal class CodingSessionController
         return oldestToShow;
     }
 
-    internal void UpdateSession() { }
+    internal void UpdateSession(int id, DateTime startTime, DateTime endTime)
+    {
+        TimeSpan duration = endTime - startTime;
+        _databaseManager.UpdateRecord(id, startTime.ToString(), endTime.ToString(), duration.ToString());
+    }
 
-    internal void DeleteSession() { }
+    internal void DeleteSession(int id)
+    {
+        _databaseManager.DeleteRecord(id);
+    }
 }
 

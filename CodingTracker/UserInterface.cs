@@ -46,6 +46,23 @@ internal class UserInterface
         }
     }
 
+    internal Panel MainMenuPanel()
+    {
+        Grid grid = new();
+        grid.AddColumn();
+        grid.AddEmptyRow();
+        grid.AddRow("[aqua]1[/] - Create new coding session");
+        grid.AddRow("[aqua]2[/] - View past coding sessions");
+        grid.AddEmptyRow();
+        grid.AddRow("OR enter [aqua]exit[/] to exit the app");
+
+        return new Panel(grid)
+        {
+            Border = BoxBorder.Square,
+            Header = new PanelHeader("[bold yellow]Welcome![/] Main Menu")
+        };
+    }
+
     internal void CreateNewSessionMenu(bool voiceMode)
     {
         string userMenuChoice = "";
@@ -54,7 +71,7 @@ internal class UserInterface
         AnsiConsole.Clear();
         while (!exitToMainMenu)
         {
-            AnsiConsole.Write(CreateNewSessionMenuOptions());
+            AnsiConsole.Write(CreateNewSessionMenuPanel());
             userMenuChoice = GetUserInput(voiceMode);
 
             switch (userMenuChoice)
@@ -66,7 +83,7 @@ internal class UserInterface
 
                 case "2":
                 case "two":
-                    ManuallyInputNewSessionDetails(voiceMode);
+                    ManuallyInputSessionDetailsPrompt(voiceMode);
                     break;
 
                 case "exit":
@@ -120,64 +137,13 @@ internal class UserInterface
         AnsiConsole.MarkupLine("Enter [bold aqua]stop[/] to stop the session.");
     }
 
-    internal void ViewEditPastSessionsMenu(bool voiceMode)
+    internal void CreateNewCustomSession(bool voiceMode)
     {
-        string userMenuChoice = "";
-        bool exitToMainMenu = false;
-
-        while (!exitToMainMenu)
-        {
-            Console.Clear();
-            AnsiConsole.Write(ShowExistingRecordsMenuOptions());
-            userMenuChoice = GetUserInput(voiceMode);
-
-            switch (userMenuChoice)
-            {
-                case "1": case "one":
-                    ShowFilteredPastRecords(voiceMode);
-                    break;
-
-                case "2": case "two":
-                    // UpdatePastSessionRecord() 
-                    break;
-
-                case "3": case "three":
-                    // DeletePastSessionRecord() --> Split into mutliple methods: PrintPastSessions: ValidateIntInput(GetUserInput()) : then send to 
-                    break;
-
-                case "4": case "four":
-                    // CalculateCodingGoal()
-                    break;
-
-                case "exit":
-                    exitToMainMenu = true;
-                    break;
-
-                default:
-                    AnsiConsole.MarkupLine("I'm sorry, but I didn't understand that menu option. Please try again.");
-                    break;
-            } 
-        }
+        DateTime[] startEndTime = ManuallyInputSessionDetailsPrompt(voiceMode);
+        _codingSessionController.WriteSessionToDatabase(startEndTime[0],startEndTime[1]);
     }
 
-    internal Panel MainMenuPanel()
-    {
-        Grid grid = new();
-        grid.AddColumn();
-        grid.AddEmptyRow();
-        grid.AddRow("[aqua]1[/] - Create new coding session");
-        grid.AddRow("[aqua]2[/] - View past coding sessions");
-        grid.AddEmptyRow();
-        grid.AddRow("OR enter [aqua]exit[/] to exit the app");
-
-        return new Panel(grid)
-        {
-            Border = BoxBorder.Square,
-            Header = new PanelHeader("[bold yellow]Welcome![/] Main Menu")
-        };
-    }
-
-    internal void ManuallyInputNewSessionDetails(bool voiceMode)
+    internal DateTime[] ManuallyInputSessionDetailsPrompt(bool voiceMode, bool updateSession=false)
     {
         string errorMessage = "";
         int userInputtedDateOrTime = -1;
@@ -199,7 +165,7 @@ internal class UserInterface
         string[] dateTimeUnits = new string[] { "year", "month", "day", "hour", "minute" };
 
         AnsiConsole.Clear();
-        AnsiConsole.MarkupLine("You are choosing to manually input the start and end times of the coding session.\n");
+        AnsiConsole.MarkupLine(updateSession ? "Please manually input the new start and end times you would like to change the entry to.\n" : "You are choosing to manually input the start and end times of the coding session.\n");
 
         for(int i=0; i<(sessionInputPrompts.Length * 2); i++)
         {
@@ -261,10 +227,50 @@ internal class UserInterface
             // TODO -- maybe confirm the start / end before writing to the database?
         }
 
-        _codingSessionController.WriteSessionToDatabase(startTime, endTime);
+        return new DateTime[] {startTime, endTime}; 
     }
 
-    internal Panel CreateNewSessionMenuOptions()
+    internal void ViewEditPastSessionsMenu(bool voiceMode)
+    {
+        string userMenuChoice = "";
+        bool exitToMainMenu = false;
+
+        while (!exitToMainMenu)
+        {
+            Console.Clear();
+            AnsiConsole.Write(ShowExistingRecordsMenuPanel());
+            userMenuChoice = GetUserInput(voiceMode);
+
+            switch (userMenuChoice)
+            {
+                case "1": case "one":
+                    ShowFilteredPastRecords(voiceMode);
+                    break;
+
+                case "2": case "two":
+                    UpdatePastSessionRecord(voiceMode); 
+                    break;
+
+                case "3": case "three":
+                    DeletePastSessionRecord(voiceMode);    
+                    break;
+
+                case "4": case "four":
+                    // CalculateCodingGoal()
+                    break;
+
+                case "exit":
+                    exitToMainMenu = true;
+                    break;
+
+                default:
+                    AnsiConsole.MarkupLine("I'm sorry, but I didn't understand that menu option. Please try again.");
+                    break;
+            } 
+        }
+    }
+
+    internal Panel CreateNewSessionMenuPanel()
     {
         Grid grid = new();
         grid.AddColumn();
@@ -281,7 +287,7 @@ internal class UserInterface
         };
     }
 
-    internal Panel ShowExistingRecordsMenuOptions()
+    internal Panel ShowExistingRecordsMenuPanel()
     {
         Grid grid = new();
         grid.AddColumn();
@@ -378,7 +384,7 @@ internal class UserInterface
         }
     }
 
-    internal Panel ShowPastRecordsPanel(List<CodingSession> sessions, TimeSpan[] totalAverageTimes)
+    internal Panel ShowPastRecordsPanel(List<CodingSession> sessions, TimeSpan[]? totalAverageTimes=null)
     {
         Grid grid = new();
         grid.AddColumn();
@@ -395,9 +401,12 @@ internal class UserInterface
         }
         grid.AddEmptyRow();
 
-        grid.AddRow("","","[yellow]Total Time Coding:[/]", totalAverageTimes[0].ToString("hh\\:mm\\:ss"));
-        grid.AddRow("","","[yellow]Average Time Coding: [/]", totalAverageTimes[1].ToString("hh\\:mm\\:ss"));
-        grid.AddEmptyRow();
+        if (totalAverageTimes != null)
+        {
+            grid.AddRow("", "", "[yellow]Total Time Coding:[/]", totalAverageTimes[0].ToString("hh\\:mm\\:ss"));
+            grid.AddRow("", "", "[yellow]Average Time Coding: [/]", totalAverageTimes[1].ToString("hh\\:mm\\:ss"));
+            grid.AddEmptyRow();
+        }
 
         return new Panel(grid)
         {
@@ -424,6 +433,72 @@ internal class UserInterface
 
         AnsiConsole.MarkupLine(voiceMode ? "\nSay [bold yellow]Continue[/] to continue back to the menu." : "\nPress [bold yellow]Enter[/] to continue back to the menu.");
         GetUserInput(voiceMode);
+    }
+
+    internal void UpdatePastSessionRecord(bool voiceMode)
+    {
+        int userIdSelection;
+        string errorMessage = "";
+        bool validIdSelected = false;
+        DateTime[] startEndTimes;
+
+        do
+        {
+            Console.Clear();
+            AnsiConsole.MarkupLine("You are choosing to update a record.Below are all of the current records.\n");
+            AnsiConsole.Write(ShowPastRecordsPanel(_codingSessionController.ReadAllPastSessions()));
+            AnsiConsole.MarkupLine("\nPlease enter the [bold yellow]id[/] (##) of the record you would like to update.");
+
+            userIdSelection = Validation.ValidateUserIntInput(GetUserInput(voiceMode), out errorMessage);
+
+            if (errorMessage != "")
+            {
+                AnsiConsole.MarkupLine(errorMessage);
+            } else
+            {
+                validIdSelected = true;
+            }
+        } while (!validIdSelected);
+
+        startEndTimes = ManuallyInputSessionDetailsPrompt(voiceMode, updateSession: true);
+
+        AnsiConsole.MarkupLine($"You have selected to update the record with the [bold yellow]id: {userIdSelection}[/] to have the start time: [bold yellow]{startEndTimes[0].ToString()}[/] and end time: [bold yellow]{startEndTimes[1].ToString()}[/] ");
+        _codingSessionController.UpdateSession(userIdSelection, startEndTimes[0], startEndTimes[1]);
+
+        AnsiConsole.MarkupLine(voiceMode ? "\nSay [bold yellow]Continue[/] to continue back to the menu." : "\nPress [bold yellow]Enter[/] to continue back to the menu.");
+        GetUserInput(voiceMode);
+    }
+
+    internal void DeletePastSessionRecord(bool voiceMode)
+    {
+        List<CodingSession> allSessions = _codingSessionController.ReadAllPastSessions();
+        bool validIdSelected = false;
+        string errorMessage = "";
+        int userIdSelection;
+
+        do
+        {
+            Console.Clear();
+            AnsiConsole.MarkupLine("You've selected to delete a record. Below are all the records of the past coding sessions.\n");
+            AnsiConsole.Write(ShowPastRecordsPanel(allSessions));
+            AnsiConsole.MarkupLine("Please enter the [bold yellow]id[/] (##) of the record you would like to delete.");
+            
+            userIdSelection = Validation.ValidateUserIntInput(GetUserInput(voiceMode), out errorMessage);
+            if (errorMessage != "")
+            {
+                AnsiConsole.MarkupLine(errorMessage);
+            }else
+            {
+                AnsiConsole.MarkupLine($"\nOkay, we're deleting the record with the id: [bold yellow]{userIdSelection}[/] from the database.");
+                validIdSelected = true;
+            }
+
+            AnsiConsole.MarkupLine(voiceMode ? "Say anything to continue." : "Press the [yellow]Enter[/] key to continue.");
+            GetUserInput(voiceMode);
+
+        } while (!validIdSelected);
+
+        _codingSessionController.DeleteSession(userIdSelection);
     }
 
     internal String GetUserInput(bool voiceMode)
