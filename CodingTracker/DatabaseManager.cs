@@ -1,6 +1,6 @@
-﻿using Microsoft.Data.Sqlite;
+﻿using Dapper;
+using Microsoft.Data.Sqlite;
 using System.Configuration;
-using Dapper;
 
 namespace TSCA.CodingTracker;
 internal class DatabaseManager
@@ -43,10 +43,10 @@ internal class DatabaseManager
                 var endTime = DateTime.Parse(reader.GetString(reader.GetOrdinal("end_datetime")));
                 var duration = TimeSpan.Parse(reader.GetString(reader.GetOrdinal("duration")));
 
-                pastSessions.Add(new CodingSession(sessionId,startTime, endTime, duration));
+                pastSessions.Add(new CodingSession(sessionId, startTime, endTime, duration));
             }
         }
-            return pastSessions;
+        return pastSessions;
     }
 
     internal void InsertRecord(string startTime, string endTime, string duration)

@@ -8,7 +8,7 @@ internal class UserInterface
 {
     private readonly CodingSessionController _codingSessionController;
     private static string? speechKey = Environment.GetEnvironmentVariable("Azure_SpeechSDK_Key");
-    private static string? speechRegion = Environment.GetEnvironmentVariable("Azure_SpeechRegion_Key");
+    private static string? speechRegion = Environment.GetEnvironmentVariable("Azure_SpeechSDK_Region"); 
 
     internal UserInterface()
     {
@@ -34,7 +34,8 @@ internal class UserInterface
                 case "one":
                     CreateNewSessionMenu(voiceMode);
                     break;
-                case "2": case "two":
+                case "2":
+                case "two":
                     ViewEditPastSessionsMenu(voiceMode);
                     break;
                 case "exit":
@@ -94,7 +95,7 @@ internal class UserInterface
                 default:
                     AnsiConsole.MarkupLine("I'm sorry, but I didn't understand that input.");
                     break;
-            } 
+            }
         }
     }
 
@@ -112,17 +113,17 @@ internal class UserInterface
             stopString = GetUserInput(voiceMode);
         }).Start();
 
-        while(timerIsRunning)
+        while (timerIsRunning)
         {
             if (stopString.StartsWith("s"))
             {
-                _codingSessionController.StopCurrentLiveSession();     
+                _codingSessionController.StopCurrentLiveSession();
                 timerIsRunning = false;
-            }
+            } 
         }
     }
 
-    internal void DisplayMessage(string message, bool clearConsole=false)
+    internal void DisplayMessage(string message, bool clearConsole = false)
     {
         if (clearConsole)
         {
@@ -134,6 +135,8 @@ internal class UserInterface
     internal void DisplayTimer(TimeSpan elapsedTime, DateTime startTime)
     {
         Console.SetCursorPosition(0, 2);
+        Console.Write(new string(' ', Console.WindowWidth * (Console.WindowHeight-3)));
+        Console.SetCursorPosition(0, 2);
         AnsiConsole.MarkupLine($"Time elapsed since you began this coding session: {elapsedTime:hh\\:mm\\:ss}");
         AnsiConsole.MarkupLine("Enter [bold aqua]stop[/] to stop the session.");
     }
@@ -141,10 +144,12 @@ internal class UserInterface
     internal void CreateNewCustomSession(bool voiceMode)
     {
         DateTime[] startEndTime = ManuallyInputSessionDetailsPrompt(voiceMode);
-        _codingSessionController.WriteSessionToDatabase(startEndTime[0],startEndTime[1]);
+
+        AnsiConsole.MarkupLine($"You're creating a new record of a coding session that: \n\tStarted on:[bold yellow]{startEndTime[0].ToString()}[/]\n\tEnded on:[bold yellow]{startEndTime[1].ToString()}[/]");
+        _codingSessionController.WriteSessionToDatabase(startEndTime[0], startEndTime[1]);
     }
 
-    internal DateTime[] ManuallyInputSessionDetailsPrompt(bool voiceMode, bool updateSession=false)
+    internal DateTime[] ManuallyInputSessionDetailsPrompt(bool voiceMode, bool updateSession = false)
     {
         string errorMessage = "";
         int userInputtedDateOrTime = -1;
@@ -168,43 +173,47 @@ internal class UserInterface
         AnsiConsole.Clear();
         AnsiConsole.MarkupLine(updateSession ? "Please manually input the new start and end times you would like to change the entry to.\n" : "You are choosing to manually input the start and end times of the coding session.\n");
 
-        for(int i=0; i<(sessionInputPrompts.Length * 2); i++)
+        for (int i = 0; i < (sessionInputPrompts.Length * 2); i++)
         {
             do
             {
                 AnsiConsole.MarkupLine(sessionInputPrompts[i % sessionInputPrompts.Length], i < sessionInputPrompts.Length ? "start" : "end");
 
                 string currentDateTimeUnit = dateTimeUnits[i % 5];
-                userInputtedDateOrTime = Validation.ValidateUserIntInput(GetUserInput(voiceMode), out errorMessage, typeOfDateUnit:currentDateTimeUnit);
+                userInputtedDateOrTime = Validation.ValidateUserIntInput(GetUserInput(voiceMode), out errorMessage, typeOfDateUnit: currentDateTimeUnit);
 
                 if (!String.IsNullOrEmpty(errorMessage))
                 {
                     AnsiConsole.MarkupLine(errorMessage);
-                } else
+                }
+                else
                 {
                     if (currentDateTimeUnit != "year" && userInputtedDateOrTime < 10)
                     {
                         dateTimePieces.Add("0" + userInputtedDateOrTime.ToString());
-                    } else
+                    }
+                    else
                     {
                         dateTimePieces.Add(userInputtedDateOrTime.ToString());
                     }
                 }
             } while (!String.IsNullOrEmpty(errorMessage));
 
-            if (i == sessionInputPrompts.Length-1) 
+            if (i == sessionInputPrompts.Length - 1)
             {
-                string maybeDate = String.Join('-',dateTimePieces);
+                string maybeDate = String.Join('-', dateTimePieces);
                 if (DateTime.TryParseExact(maybeDate, dateTimeFormat, null, System.Globalization.DateTimeStyles.None, out startTime))
                 {
                     dateTimePieces.Clear();
-                } else
+                }
+                else
                 {
                     AnsiConsole.MarkupLine("That date was invalid for some reason. Please try again.");
                     dateTimePieces.Clear();
                     i = -1;
                 }
-            } else if (i == sessionInputPrompts.Length * 2 - 1)
+            }
+            else if (i == sessionInputPrompts.Length * 2 - 1)
             {
                 string maybeDate = String.Join('-', dateTimePieces);
                 if (DateTime.TryParseExact(maybeDate, dateTimeFormat, null, System.Globalization.DateTimeStyles.None, out endTime))
@@ -215,22 +224,21 @@ internal class UserInterface
                 {
                     AnsiConsole.MarkupLine("That date was invalid for some reason. Please try again.");
                     dateTimePieces.Clear();
-                    i = sessionInputPrompts.Length-1;
+                    i = sessionInputPrompts.Length - 1;
                 }
 
-                if (DateTime.Compare(startTime,endTime) >= 0)
+                if (DateTime.Compare(startTime, endTime) >= 0)
                 {
-                    AnsiConsole.MarkupLine("For some reason, [yellow]start time was the same as or [bold yellow]after[/] your end time[/]. Please input the end time again.");
-                    i = sessionInputPrompts.Length-1;
+                    AnsiConsole.MarkupLine($"For some reason, [maroon]the start time was the same as or after your end time[/]. \n\tYour start time is: {startTime.ToString()}\nPlease input the end time again.");
+                    i = sessionInputPrompts.Length - 1;
                 }
             }
-            AnsiConsole.MarkupLine("You're creating a new record of a coding session that: \n\tStarted on:[bold yellow]{startTime.ToString()}\n\tEnded on:{endTime.ToString()}");
-
-            AnsiConsole.MarkupLine(voiceMode ? "Say [yellow]Continue[/] to continue." : "Press the [bold yellow]Enter[/] key to continue.");
-            GetUserInput(voiceMode);
         }
 
-        return new DateTime[] {startTime, endTime}; 
+        AnsiConsole.MarkupLine(voiceMode ? "\nSay [yellow]Continue[/] to continue." : "\nPress the [bold yellow]Enter[/] key to continue.");
+        GetUserInput(voiceMode);
+
+        return new DateTime[] { startTime, endTime };
     }
 
     internal void ViewEditPastSessionsMenu(bool voiceMode)
@@ -246,19 +254,23 @@ internal class UserInterface
 
             switch (userMenuChoice)
             {
-                case "1": case "one":
+                case "1":
+                case "one":
                     ShowFilteredPastRecords(voiceMode);
                     break;
 
-                case "2": case "two":
-                    UpdatePastSessionRecord(voiceMode); 
+                case "2":
+                case "two":
+                    UpdatePastSessionRecord(voiceMode);
                     break;
 
-                case "3": case "three":
-                    DeletePastSessionRecord(voiceMode);    
+                case "3":
+                case "three":
+                    DeletePastSessionRecord(voiceMode);
                     break;
 
-                case "4": case "four":
+                case "4":
+                case "four":
                     GoalCalculationPrompt(voiceMode);
                     break;
 
@@ -269,7 +281,7 @@ internal class UserInterface
                 default:
                     AnsiConsole.MarkupLine("I'm sorry, but I didn't understand that menu option. Please try again.");
                     break;
-            } 
+            }
         }
     }
 
@@ -298,7 +310,7 @@ internal class UserInterface
         grid.AddRow("[aqua]1[/] - View all past coding sessions and associated stats");
         grid.AddRow("[aqua]2[/] - Update a past coding session");
         grid.AddRow("[aqua]3[/] - Delete a past coding session");
-        grid.AddRow("[aqua]4[/] - Calculate hours needed to meet your coding goal"); 
+        grid.AddRow("[aqua]4[/] - Calculate hours needed to meet your coding goal");
         grid.AddEmptyRow();
         grid.AddRow("OR enter [aqua]exit[/] to exit back to the main menu.");
 
@@ -336,7 +348,7 @@ internal class UserInterface
             "shortest","longest", "newest", "oldest", "no"
         };
 
-        for (int i =0;i<inputPrompts.Length;i++)
+        for (int i = 0; i < inputPrompts.Length; i++)
         {
             AnsiConsole.MarkupLine(inputPrompts[i]);
             userInput = GetUserInput(voiceMode);
@@ -350,11 +362,12 @@ internal class UserInterface
                     }
                     break;
 
-                case 1: 
+                case 1:
                     if (timePeriodUnits.Contains(userInput))
                     {
                         periodUnit = userInput;
-                    } else
+                    }
+                    else
                     {
                         AnsiConsole.MarkupLine("Sorry, but I didn't recognize that period of time. Please try again.");
                         i = 0;
@@ -366,7 +379,8 @@ internal class UserInterface
                     if (String.IsNullOrEmpty(errorMessage))
                     {
                         customPeriodLength = 1;
-                    } else
+                    }
+                    else
                     {
                         AnsiConsole.MarkupLine(errorMessage);
                         i = 1;
@@ -377,7 +391,8 @@ internal class UserInterface
                     if (sortByUnits.Contains(userInput))
                     {
                         sortType = userInput;
-                    } else
+                    }
+                    else
                     {
                         AnsiConsole.MarkupLine("I'm sorry, but I didn't understand how you want to sort the coding session records. Please try again.");
                         i = 2;
@@ -387,7 +402,7 @@ internal class UserInterface
         }
     }
 
-    internal Panel ShowPastRecordsPanel(List<CodingSession> sessions, TimeSpan[]? totalAverageTimes=null)
+    internal Panel ShowPastRecordsPanel(List<CodingSession> sessions, TimeSpan[]? totalAverageTimes = null)
     {
         Grid grid = new();
         grid.AddColumn();
@@ -439,7 +454,8 @@ internal class UserInterface
 
     internal void UpdatePastSessionRecord(bool voiceMode)
     {
-        int userIdSelection;
+        string userMenuSelection = "";
+        int userIdSelection = -1;
         string errorMessage = "";
         bool validIdSelected = false;
         DateTime[] startEndTimes;
@@ -449,58 +465,81 @@ internal class UserInterface
             Console.Clear();
             AnsiConsole.MarkupLine("You are choosing to update a record.Below are all of the current records.\n");
             AnsiConsole.Write(ShowPastRecordsPanel(_codingSessionController.ReadAllPastSessions()));
-            AnsiConsole.MarkupLine("\nPlease enter the [bold yellow]id[/] (##) of the record you would like to update.");
+            AnsiConsole.MarkupLine("\nPlease enter the [bold yellow]id[/] (##) of the record you would like to update. \nOR enter [bold yellow]Exit[/] to exit back to the menu.");
 
-            userIdSelection = Validation.ValidateUserIntInput(GetUserInput(voiceMode), out errorMessage);
-
-            if (errorMessage != "")
+            userMenuSelection = GetUserInput(voiceMode);
+            if (userMenuSelection != "exit")
             {
-                AnsiConsole.MarkupLine(errorMessage);
+                userIdSelection = Validation.ValidateUserIntInput(userMenuSelection, out errorMessage);
+                if (errorMessage != "")
+                {
+                    AnsiConsole.MarkupLine(errorMessage);
+                }
+                else
+                {
+                    validIdSelected = true;
+                }
             } else
             {
                 validIdSelected = true;
             }
+
         } while (!validIdSelected);
 
-        startEndTimes = ManuallyInputSessionDetailsPrompt(voiceMode, updateSession: true);
+        if (userMenuSelection != "exit")
+        {
+            startEndTimes = ManuallyInputSessionDetailsPrompt(voiceMode, updateSession: true);
 
-        AnsiConsole.MarkupLine($"You have selected to update the record with the [bold yellow]id: {userIdSelection}[/] to have the start time: [bold yellow]{startEndTimes[0].ToString()}[/] and end time: [bold yellow]{startEndTimes[1].ToString()}[/] ");
-        _codingSessionController.UpdateSession(userIdSelection, startEndTimes[0], startEndTimes[1]);
+            AnsiConsole.MarkupLine($"You have selected to update the record with the [bold yellow]id: {userIdSelection}[/] to have the start time: [bold yellow]{startEndTimes[0].ToString()}[/] and end time: [bold yellow]{startEndTimes[1].ToString()}[/] ");
+            _codingSessionController.UpdateSession(userIdSelection, startEndTimes[0], startEndTimes[1]);
 
-        AnsiConsole.MarkupLine(voiceMode ? "\nSay [bold yellow]Continue[/] to continue back to the menu." : "\nPress [bold yellow]Enter[/] to continue back to the menu.");
-        GetUserInput(voiceMode);
+            AnsiConsole.MarkupLine(voiceMode ? "\nSay [bold yellow]Continue[/] to continue back to the menu." : "\nPress [bold yellow]Enter[/] to continue back to the menu.");
+            GetUserInput(voiceMode);
+        }
     }
 
     internal void DeletePastSessionRecord(bool voiceMode)
     {
         List<CodingSession> allSessions = _codingSessionController.ReadAllPastSessions();
+        string userMenuSelection = "";
         bool validIdSelected = false;
         string errorMessage = "";
-        int userIdSelection;
+        int userIdSelection = -1;
 
         do
         {
             Console.Clear();
             AnsiConsole.MarkupLine("You've selected to delete a record. Below are all the records of the past coding sessions.\n");
             AnsiConsole.Write(ShowPastRecordsPanel(allSessions));
-            AnsiConsole.MarkupLine("Please enter the [bold yellow]id[/] (##) of the record you would like to delete.");
-            
-            userIdSelection = Validation.ValidateUserIntInput(GetUserInput(voiceMode), out errorMessage);
-            if (errorMessage != "")
+            AnsiConsole.MarkupLine("Please enter the [bold yellow]id[/] (##) of the record you would like to delete.\nOR enter [bold yellow]Exit[/] to exit back to the menu.");
+
+            userMenuSelection = GetUserInput(voiceMode);
+            if (userMenuSelection != "exit")
             {
-                AnsiConsole.MarkupLine(errorMessage);
-            }else
+                userIdSelection = Validation.ValidateUserIntInput(userMenuSelection, out errorMessage);
+                if (errorMessage != "")
+                {
+                    AnsiConsole.MarkupLine(errorMessage);
+                }
+                else
+                {
+                    AnsiConsole.MarkupLine($"\nOkay, we're deleting the record with the id: [bold yellow]{userIdSelection}[/] from the database.");
+                    validIdSelected = true;
+                }
+
+                AnsiConsole.MarkupLine(voiceMode ? "Say anything to continue." : "Press the [yellow]Enter[/] key to continue.");
+                GetUserInput(voiceMode);
+
+            } else
             {
-                AnsiConsole.MarkupLine($"\nOkay, we're deleting the record with the id: [bold yellow]{userIdSelection}[/] from the database.");
                 validIdSelected = true;
             }
-
-            AnsiConsole.MarkupLine(voiceMode ? "Say anything to continue." : "Press the [yellow]Enter[/] key to continue.");
-            GetUserInput(voiceMode);
-
         } while (!validIdSelected);
 
-        _codingSessionController.DeleteSession(userIdSelection);
+        if (userMenuSelection != "exit")
+        {
+            _codingSessionController.DeleteSession(userIdSelection);
+        }
     }
 
     internal void GoalCalculationPrompt(bool voiceMode)
@@ -516,7 +555,7 @@ internal class UserInterface
             "Please enter your coding goal, expressed in [yellow]hours[/] of time coding. (##)",
             "Please enter how many [yellow]days[/] (##) you have left to meet this goal."
         };
-        
+
         Console.Clear();
 
         for (int i = 0; i < prompts.Length; i++)
@@ -531,7 +570,8 @@ internal class UserInterface
                 if (i == 0)
                 {
                     codingHoursGoal = Validation.ValidateUserIntInput(GetUserInput(voiceMode), out errorMessage);
-                } else
+                }
+                else
                 {
                     daysToCodeGoal = Validation.ValidateUserIntInput(GetUserInput(voiceMode), out errorMessage);
                 }
@@ -556,14 +596,21 @@ internal class UserInterface
         GetUserInput(voiceMode);
     }
 
-    internal String GetUserInput(bool voiceMode)
+    internal static String GetUserInput(bool voiceMode)
     {
         string? readResult;
         string userInput = "";
 
         if (voiceMode)
         {
-            userInput = GetVoiceInput().Result;
+            try
+            {
+                userInput = GetVoiceInput().Result;
+            }
+            catch (AggregateException ex)
+            {
+                foreach (Exception ex2 in ex.InnerExceptions) { Console.WriteLine(ex2.InnerException); }
+            }
         }
         else
         {
@@ -576,7 +623,7 @@ internal class UserInterface
         return userInput;
     }
 
-    internal async Task<String> GetVoiceInput()
+    internal static async Task<String> GetVoiceInput()
     {
         int repeatCounter = 0;
         RecognitionResult result;
@@ -593,9 +640,10 @@ internal class UserInterface
             {
                 string userVoiceInput = result.Text;
                 AnsiConsole.MarkupLine($"[bold yellow]Speech Input Recognized:[/] {userVoiceInput}");
+                Thread.Sleep(1500);
 
                 userVoiceInput = userVoiceInput.Trim().ToLower();
-                userVoiceInput = Regex.Replace(userVoiceInput, @"[^a-z0-9\s]", "");
+                userVoiceInput = Regex.Replace(userVoiceInput, @"[^a-z0-9\s-]", "");
 
                 return userVoiceInput;
             }

@@ -3,13 +3,13 @@ internal class CodingSession
 {
     internal int id { get; set; }
     internal DateTime startTime { get; private set; }
-    internal DateTime endTime { get; private set; }  
+    internal DateTime endTime { get; private set; }
     internal TimeSpan duration { get; private set; }
 
     internal System.Timers.Timer? timer;
     internal Action<TimeSpan>? TimerElapsed;
 
-    internal CodingSession(int id,  DateTime startTime, DateTime endTime, TimeSpan duration)
+    internal CodingSession(int id, DateTime startTime, DateTime endTime, TimeSpan duration)
     {
         this.id = id;
         this.startTime = startTime;

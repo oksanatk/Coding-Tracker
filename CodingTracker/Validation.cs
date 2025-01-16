@@ -7,13 +7,13 @@ internal static class Validation
         return "";
     }
 
-    internal static int ValidateUserIntInput(string maybeNumber, out string errorMessage, string typeOfDateUnit ="")
+    internal static int ValidateUserIntInput(string maybeNumber, out string errorMessage, string typeOfDateUnit = "")
     {
         int realNumberValue = -1;
         errorMessage = "";
         typeOfDateUnit = typeOfDateUnit.Trim().ToLower();
 
-        Dictionary<string, Func<int,string>> validationForDateTime = new Dictionary<string, Func<int, string>>
+        Dictionary<string, Func<int, string>> validationForDateTime = new Dictionary<string, Func<int, string>>
         {
             {"", num => num >=0 ? "" : "Sorry, but we don't really have a use for negative numbers."},
             {"year", num => num>1500 && num<=2500 ? "" : "Wow! You must live in another age. We can only do years between 1000 and 3000. Please try again." },
@@ -30,7 +30,7 @@ internal static class Validation
 
         if (int.TryParse(maybeNumber, out realNumberValue))
         {
-            errorMessage = validationForDateTime[typeOfDateUnit](realNumberValue);   
+            errorMessage = validationForDateTime[typeOfDateUnit](realNumberValue);
         }
         else
         {
@@ -40,4 +40,4 @@ internal static class Validation
     }
 }
 
-    
+

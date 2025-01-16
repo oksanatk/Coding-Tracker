@@ -24,13 +24,13 @@ internal class CodingSessionController
     internal void StartNewLiveSession(DateTime startTime)
     {
         currentLiveSession = new CodingSession(startTime);
-        currentLiveSession.TimerElapsed += elapsedTime => 
+        currentLiveSession.TimerElapsed += elapsedTime =>
             {
-            _userInterface.DisplayTimer(currentLiveSession.duration, currentLiveSession.startTime);
+                _userInterface.DisplayTimer(currentLiveSession.duration, currentLiveSession.startTime);
             };
         currentLiveSession.StartTimer();
 
-        _userInterface.DisplayMessage($"You started a new coding session at {startTime}. \n", clearConsole: true);
+        _userInterface.DisplayMessage($"You started a new coding session at {startTime}. \n", clearConsole: true); 
     }
 
     internal void StopCurrentLiveSession()
@@ -41,20 +41,23 @@ internal class CodingSessionController
             return;
         }
 
+        _userInterface.DisplayMessage($"You started a new coding session at {currentLiveSession.startTime}. \n", clearConsole: true);
+        _userInterface.DisplayTimer(currentLiveSession.duration, currentLiveSession.startTime);
+
         currentLiveSession.StopTimer();
         _userInterface.DisplayMessage($"Session stopped.\nSession Start Time: [bold yellow]{currentLiveSession.startTime}[/] \nSession End Time: [bold yellow]{currentLiveSession.endTime}[/] \nTotal Session Coding Time: [bold yellow]{currentLiveSession.duration}[/]\n\n");
 
         WriteSessionToDatabase(currentLiveSession.startTime, currentLiveSession.endTime);
     }
 
-    internal List<CodingSession> ReadAllPastSessions() 
+    internal List<CodingSession> ReadAllPastSessions()
     {
         List<CodingSession> readFromDatabase = _databaseManager.ReadAllPastSessions();
         this.sessions = readFromDatabase;
         return readFromDatabase;
     }
 
-    internal List<CodingSession> FilterSortPastRecordsToBeViewed(out TimeSpan[] totalAverageTimes, string periodUnit="", int numberOfPeriodUnits=1, string sortType="no")
+    internal List<CodingSession> FilterSortPastRecordsToBeViewed(out TimeSpan[] totalAverageTimes, string periodUnit = "", int numberOfPeriodUnits = 1, string sortType = "no")
     {
         List<CodingSession> filteredSessions = ReadAllPastSessions();
 
@@ -62,10 +65,10 @@ internal class CodingSessionController
         {
             DateTime oldestToShow = CalculateOldestDateTime(periodUnit, numberOfPeriodUnits);
             filteredSessions = filteredSessions.Where(session => session.startTime > oldestToShow).ToList();
-        } 
+        }
 
         totalAverageTimes = CalculateSessionTimeAverageTotal(filteredSessions);
-        
+
         if (!String.IsNullOrEmpty(sortType) || sortType != "no")
         {
             switch (sortType)
@@ -74,7 +77,7 @@ internal class CodingSessionController
                     filteredSessions.Sort((x, y) => DateTime.Compare(y.startTime, x.startTime));
                     break;
 
-                case "oldest": 
+                case "oldest":
                     filteredSessions.Sort((x, y) => DateTime.Compare(x.startTime, y.startTime));
                     break;
 
@@ -87,7 +90,7 @@ internal class CodingSessionController
                     break;
             }
         }
-        return filteredSessions; 
+        return filteredSessions;
     }
 
     private TimeSpan[] CalculateSessionTimeAverageTotal(List<CodingSession> filteredSessions)
