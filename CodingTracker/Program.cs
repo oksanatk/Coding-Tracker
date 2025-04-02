@@ -6,9 +6,9 @@ class Program
     {
         bool speechRecognitionMode = false;
 
-        if (!File.Exists("CodingHours.db"))
+        if (!File.Exists(System.Configuration.ConfigurationManager.AppSettings.Get("PathToDatabase")))
         {
-            File.Create("CodingHours.db").Close();
+            File.Create(System.Configuration.ConfigurationManager.AppSettings.Get("PathToDatabase")).Close();
         }
 
         if (args.Contains("--voice-input"))

@@ -2,8 +2,7 @@
   "profiles": {
     "CodingTracker": {
       "commandName": "Project",
-      "commandLineArgs": "--voice-input",
-      "workingDirectory": "C:\\Users\\O\\source\\repos\\Learning Projects\\CodingTracker",
+      "workingDirectory": "C:\\Users\\O\\source\\repos\\Coding-Tracker\\CodingTracker",
       "sqlDebugging": true
     }
   }
