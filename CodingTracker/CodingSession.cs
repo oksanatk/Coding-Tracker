@@ -1,4 +1,4 @@
-﻿namespace TSCA.CodingTracker;
+﻿namespace CodingTracker;
 internal class CodingSession
 {
     internal int Id { get; set; }

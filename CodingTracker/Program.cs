@@ -1,4 +1,4 @@
-﻿namespace TSCA.CodingTracker;
+﻿namespace CodingTracker;
 class Program
 {
     private static readonly UserInterface _userInterface = new UserInterface();

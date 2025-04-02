@@ -2,7 +2,7 @@
 using Microsoft.Data.Sqlite;
 using System.Configuration;
 
-namespace TSCA.CodingTracker;
+namespace CodingTracker;
 internal class DatabaseManager
 {
     internal static string? connectionString = ConfigurationManager.AppSettings.Get("ConnectionString");
