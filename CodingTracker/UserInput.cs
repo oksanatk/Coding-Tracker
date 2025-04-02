@@ -1,5 +1,6 @@
 ﻿using Microsoft.CognitiveServices.Speech;
 using Spectre.Console;
+using System.Globalization;
 using System.Text.RegularExpressions;
 
 namespace CodingTracker;
@@ -141,20 +142,20 @@ internal class UserInput
         int userInputtedDateOrTime = -1;
         List<String> dateTimePieces = new();
 
-        string dateTimeFormat = "yyyy-MM-dd-HH-mm";
+        string dateTimeFormat = "M/d/yyyy H:mm";
         DateTime startTime = new();
         DateTime endTime = new();
 
         string[] sessionInputPrompts = new string[]
         {
-             "\nPlease enter the [bold yellow]year[/] (yyyy) of the {0} time.",
              "\nPlease enter the [bold yellow]month[/] (MM) of the {0} time.",
              "\nPlease enter the [bold yellow]day[/] (dd) of the {0} time.",
+             "\nPlease enter the [bold yellow]year[/] (yyyy) of the {0} time.",
              "\nPlease enter the [bold yellow]hour[/] (HH) of the {0} time.",
              "\nPlease enter the [bold yellow]minute[/] (mm) of the {0} time.",
         };
 
-        string[] dateTimeUnits = new string[] { "year", "month", "day", "hour", "minute" };
+        string[] dateTimeUnits = new string[] { "month", "day", "year", "hour", "minute" };
 
         AnsiConsole.Clear();
         AnsiConsole.MarkupLine(updateSession ? "Please manually input the new start and end times you would like to change the entry to.\n" : "You are choosing to manually input the start and end times of the coding session.\n");
@@ -187,7 +188,7 @@ internal class UserInput
 
             if (i == sessionInputPrompts.Length - 1)
             {
-                string maybeDate = String.Join('-', dateTimePieces);
+                string maybeDate = String.Join('/', dateTimePieces.Take(3)) + " " + String.Join(':', dateTimePieces.Skip(3).Take(2));
                 if (DateTime.TryParseExact(maybeDate, dateTimeFormat, null, System.Globalization.DateTimeStyles.None, out startTime))
                 {
                     dateTimePieces.Clear();
@@ -201,8 +202,9 @@ internal class UserInput
             }
             else if (i == sessionInputPrompts.Length * 2 - 1)
             {
-                string maybeDate = String.Join('-', dateTimePieces);
-                if (DateTime.TryParseExact(maybeDate, dateTimeFormat, null, System.Globalization.DateTimeStyles.None, out endTime))
+                string maybeDate = String.Join('/', dateTimePieces.Take(3)) + " " + String.Join(':', dateTimePieces.Skip(3).Take(2));
+
+                if (DateTime.TryParseExact(maybeDate, dateTimeFormat, CultureInfo.CreateSpecificCulture("en-US"), System.Globalization.DateTimeStyles.None, out endTime))
                 {
                     dateTimePieces.Clear();
                 }

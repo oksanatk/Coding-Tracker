@@ -85,7 +85,8 @@ internal class UserInterface
 
                 case "2":
                 case "two":
-                    UserInput.ManuallyInputSessionDetailsPrompt(voiceMode);
+                    DateTime[] startEndTime = UserInput.ManuallyInputSessionDetailsPrompt(voiceMode);
+                    _codingSessionController.WriteSessionToDatabase(startEndTime[0], startEndTime[1]);
                     break;
 
                 case "exit":

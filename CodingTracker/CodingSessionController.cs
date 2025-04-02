@@ -1,4 +1,6 @@
-﻿namespace CodingTracker;
+﻿using System.Globalization;
+
+namespace CodingTracker;
 
 internal class CodingSessionController
 {
@@ -6,6 +8,7 @@ internal class CodingSessionController
     internal readonly UserInterface _userInterface;
     List<CodingSession> sessions = new();
     CodingSession? currentLiveSession;
+    CultureInfo culture = CultureInfo.CreateSpecificCulture("en-US");
 
     internal CodingSessionController(UserInterface userInterface)
     {
@@ -17,8 +20,10 @@ internal class CodingSessionController
     {
         TimeSpan duration = endTime - startTime;
         sessions.Add(new CodingSession(startTime, endTime, duration));
+        string formattedStart = startTime.ToString("M/d/yyyy h:mm:ss tt", culture);
+        string formattedEnd = endTime.ToString("M/d/yyyy h:mm:ss tt", culture);
 
-        _databaseManager.InsertRecord(startTime.ToString(), endTime.ToString(), duration.ToString());
+        _databaseManager.InsertRecord(formattedStart, formattedEnd, duration.ToString());
     }
 
     internal void StartNewLiveSession(DateTime startTime)
@@ -155,7 +160,10 @@ internal class CodingSessionController
     internal void UpdateSession(int id, DateTime startTime, DateTime endTime)
     {
         TimeSpan duration = endTime - startTime;
-        _databaseManager.UpdateRecord(id, startTime.ToString(), endTime.ToString(), duration.ToString());
+        string formattedStart = startTime.ToString("M/d/yyyy h:mm:ss tt", culture);
+        string formattedEnd = endTime.ToString("M/d/yyyy h:mm:ss tt", culture);
+
+        _databaseManager.UpdateRecord(id, formattedStart, formattedEnd, duration.ToString());
     }
 
     internal void DeleteSession(int id)

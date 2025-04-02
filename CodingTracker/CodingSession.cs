@@ -1,6 +1,9 @@
-﻿namespace CodingTracker;
+﻿using System.Globalization;
+
+namespace CodingTracker;
 internal class CodingSession
 {
+    CultureInfo culture = CultureInfo.CreateSpecificCulture("en-US");
     internal int Id { get; set; }
     internal DateTime StartTime { get; private set; }
     internal DateTime EndTime { get; private set; }
@@ -33,8 +36,8 @@ internal class CodingSession
     internal CodingSession(System.Int64 id, string start_datetime, string end_datetime, string duration)
     {
         this.Id = (int)id;
-        this.StartTime = DateTime.Parse(start_datetime);
-        this.EndTime = DateTime.Parse(end_datetime);
+        this.StartTime = DateTime.ParseExact(start_datetime, "M/d/yyyy h:mm:ss tt", culture);
+        this.EndTime = DateTime.ParseExact(end_datetime, "M/d/yyyy h:mm:ss tt", culture);
         this.Duration = TimeSpan.Parse(duration);
     }
 
