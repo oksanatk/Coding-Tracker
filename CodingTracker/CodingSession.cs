@@ -1,33 +1,41 @@
 ﻿namespace TSCA.CodingTracker;
 internal class CodingSession
 {
-    internal int id { get; set; }
-    internal DateTime startTime { get; private set; }
-    internal DateTime endTime { get; private set; }
-    internal TimeSpan duration { get; private set; }
+    internal int Id { get; set; }
+    internal DateTime StartTime { get; private set; }
+    internal DateTime EndTime { get; private set; }
+    internal TimeSpan Duration { get; private set; }
 
     internal System.Timers.Timer? timer;
     internal Action<TimeSpan>? TimerElapsed;
 
     internal CodingSession(int id, DateTime startTime, DateTime endTime, TimeSpan duration)
     {
-        this.id = id;
-        this.startTime = startTime;
-        this.endTime = endTime;
-        this.duration = duration;
+        this.Id = id;
+        this.StartTime = startTime;
+        this.EndTime = endTime;
+        this.Duration = duration;
     }
 
     internal CodingSession(DateTime startTime, DateTime endTime, TimeSpan duration)
     {
-        this.startTime = startTime;
-        this.endTime = endTime;
-        this.duration = duration;
+        this.StartTime = startTime;
+        this.EndTime = endTime;
+        this.Duration = duration;
     }
 
     internal CodingSession(DateTime startTime)
     {
-        this.startTime = startTime;
-        this.endTime = new DateTime();
+        this.StartTime = startTime;
+        this.EndTime = new DateTime();
+    }
+
+    internal CodingSession(System.Int64 id, string start_datetime, string end_datetime, string duration)
+    {
+        this.Id = (int)id;
+        this.StartTime = DateTime.Parse(start_datetime);
+        this.EndTime = DateTime.Parse(end_datetime);
+        this.Duration = TimeSpan.Parse(duration);
     }
 
     internal void StartTimer()
@@ -39,15 +47,15 @@ internal class CodingSession
 
     internal void StopTimer()
     {
-        endTime = DateTime.Now;
+        EndTime = DateTime.Now;
         timer.Stop();
         timer.Dispose();
     }
 
     private void OnTimerElapsed(object sender, System.Timers.ElapsedEventArgs e)
     {
-        TimeSpan elapsedTime = DateTime.Now - startTime;
-        duration = elapsedTime;
+        TimeSpan elapsedTime = DateTime.Now - StartTime;
+        Duration = elapsedTime;
         TimerElapsed?.Invoke(elapsedTime);
     }
 }

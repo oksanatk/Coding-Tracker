@@ -26,7 +26,7 @@ internal class CodingSessionController
         currentLiveSession = new CodingSession(startTime);
         currentLiveSession.TimerElapsed += elapsedTime =>
             {
-                _userInterface.DisplayTimer(currentLiveSession.duration, currentLiveSession.startTime);
+                _userInterface.DisplayTimer(currentLiveSession.Duration, currentLiveSession.StartTime);
             };
         currentLiveSession.StartTimer();
 
@@ -41,13 +41,13 @@ internal class CodingSessionController
             return;
         }
 
-        _userInterface.DisplayMessage($"You started a new coding session at {currentLiveSession.startTime}. \n", clearConsole: true);
-        _userInterface.DisplayTimer(currentLiveSession.duration, currentLiveSession.startTime);
+        _userInterface.DisplayMessage($"You started a new coding session at {currentLiveSession.StartTime}. \n", clearConsole: true);
+        _userInterface.DisplayTimer(currentLiveSession.Duration, currentLiveSession.StartTime);
 
         currentLiveSession.StopTimer();
-        _userInterface.DisplayMessage($"Session stopped.\nSession Start Time: [bold yellow]{currentLiveSession.startTime}[/] \nSession End Time: [bold yellow]{currentLiveSession.endTime}[/] \nTotal Session Coding Time: [bold yellow]{currentLiveSession.duration}[/]\n\n");
+        _userInterface.DisplayMessage($"Session stopped.\nSession Start Time: [bold yellow]{currentLiveSession.StartTime}[/] \nSession End Time: [bold yellow]{currentLiveSession.EndTime}[/] \nTotal Session Coding Time: [bold yellow]{currentLiveSession.Duration}[/]\n\n");
 
-        WriteSessionToDatabase(currentLiveSession.startTime, currentLiveSession.endTime);
+        WriteSessionToDatabase(currentLiveSession.StartTime, currentLiveSession.EndTime);
     }
 
     internal List<CodingSession> ReadAllPastSessions()
@@ -64,7 +64,7 @@ internal class CodingSessionController
         if (!String.IsNullOrEmpty(periodUnit))
         {
             DateTime oldestToShow = CalculateOldestDateTime(periodUnit, numberOfPeriodUnits);
-            filteredSessions = filteredSessions.Where(session => session.startTime > oldestToShow).ToList();
+            filteredSessions = filteredSessions.Where(session => session.StartTime > oldestToShow).ToList();
         }
 
         totalAverageTimes = CalculateSessionTimeAverageTotal(filteredSessions);
@@ -74,19 +74,19 @@ internal class CodingSessionController
             switch (sortType)
             {
                 case "newest":
-                    filteredSessions.Sort((x, y) => DateTime.Compare(y.startTime, x.startTime));
+                    filteredSessions.Sort((x, y) => DateTime.Compare(y.StartTime, x.StartTime));
                     break;
 
                 case "oldest":
-                    filteredSessions.Sort((x, y) => DateTime.Compare(x.startTime, y.startTime));
+                    filteredSessions.Sort((x, y) => DateTime.Compare(x.StartTime, y.StartTime));
                     break;
 
                 case "shortest":
-                    filteredSessions.Sort((x, y) => TimeSpan.Compare(x.duration, y.duration));
+                    filteredSessions.Sort((x, y) => TimeSpan.Compare(x.Duration, y.Duration));
                     break;
 
                 case "longest":
-                    filteredSessions.Sort((x, y) => TimeSpan.Compare(y.duration, x.duration));
+                    filteredSessions.Sort((x, y) => TimeSpan.Compare(y.Duration, x.Duration));
                     break;
             }
         }
@@ -100,9 +100,16 @@ internal class CodingSessionController
 
         foreach (CodingSession session in filteredSessions)
         {
-            total += session.duration;
+            total += session.Duration;
         }
-        average = total / filteredSessions.Count;
+        if (filteredSessions.Count > 0)
+        {
+            average = total / filteredSessions.Count;
+        }
+        else
+        {
+            average = TimeSpan.Zero;
+        }
 
         return new TimeSpan[] { total, average };
     }

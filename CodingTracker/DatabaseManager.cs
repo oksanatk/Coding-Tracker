@@ -35,16 +35,7 @@ internal class DatabaseManager
             connection.Open();
             string sqliteCommand = "SELECT * FROM coding_tracker;";
 
-            var reader = connection.ExecuteReader(sqliteCommand);
-            while (reader.Read())
-            {
-                var sessionId = reader.GetInt32(reader.GetOrdinal("id"));
-                var startTime = DateTime.Parse(reader.GetString(reader.GetOrdinal("start_datetime")));
-                var endTime = DateTime.Parse(reader.GetString(reader.GetOrdinal("end_datetime")));
-                var duration = TimeSpan.Parse(reader.GetString(reader.GetOrdinal("duration")));
-
-                pastSessions.Add(new CodingSession(sessionId, startTime, endTime, duration));
-            }
+            pastSessions = connection.Query<CodingSession>(sqliteCommand).ToList();
         }
         return pastSessions;
     }
